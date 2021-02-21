@@ -55,8 +55,10 @@ class GPT(nn.Module):
         self.drop = nn.Dropout(config.embd_pdrop)
 
         # transformer
-        self.ln_f = nn.LayerNorm(config.n_embd)
         self.blocks = nn.Sequential(*[Block(config) for _ in range(config.n_layer)])
+
+        self.ln_f = nn.LayerNorm(config.n_embd)
+        self.head = nn.Linear(config.n_embd, config.vocab_size, bias=False)
         self.block_size = config.block_size
 
         print("Number of parameters: {}".format(sum(p.numel() for p in self.parameters())))
