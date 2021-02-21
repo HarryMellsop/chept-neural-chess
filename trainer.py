@@ -48,7 +48,7 @@ class Trainer:
     def save_checkpoint(self):
         if self.config.ckpt_path is not None:
             ckpt_model = self.model.module if hasattr(self.model, "module") else self.model
-            logger.info("saving %s", self.config.ckpt_path)
+            print("saving %s", self.config.ckpt_path)
             torch.save(ckpt_model.state_dict(), self.config.ckpt_path)
 
     def train(self):
@@ -124,7 +124,7 @@ class Trainer:
                     pbar.set_description(f"epoch {epoch + 1} iter {it}: train loss {loss.item():.3f}. lr {lr:e}")
 
             if not is_train:
-                logger.info("test loss: %f", np.mean(losses))
+                print("test loss: %f", np.mean(losses))
 
         self.tokens = 0
         for epoch in range(config.max_epochs):
