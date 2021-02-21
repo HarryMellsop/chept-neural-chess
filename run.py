@@ -35,11 +35,6 @@ args = argp.parse_args()
 # Save the device
 device = torch.cuda.current_device() if torch.cuda.is_available() else 'cpu'
 
-# Keep the block size 128
-# Why is the pretraining corpus always required (even if we're not pretraining?)
-# It's because we're using it as a hack to always have the same vocabulary
-# (that is, the same mapping from character to integer, and we build the 
-# vocab from the pretraining corpus.)
 block_size = 128
 text = open(args.pretrain_corpus_path).read()
 pretrain_dataset = dataset.CharCorruptionDataset(text, block_size)
@@ -53,17 +48,12 @@ Don't change above here; write your code below
 """
 
 if args.variant == 'vanilla':
-    # TODO [part c]: Make some model here
     model = model.GPT(mconf)
     model = model.to(device)
 
 elif args.variant == 'synthesizer':
-    pass # TODO [part g]: Make some other model here
     model = model.GPT(mconf)
     model = model.to(device)
-
-# From here on, your code should be identical independent of which
-# variant (vanilla or synthesizer) has been chosen.
 
 if args.function == 'pretrain':
     assert args.pretrain_corpus_path is not None

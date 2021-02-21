@@ -34,7 +34,7 @@ class Block(nn.Module):
         self.attn = nn.MultiheadAttention(
             embed_dim=config.n_embd,
             num_heads=config.n_head,
-            dropout=config.attn_pdrop
+            dropout=config.attn_pdrop,
             bias=True
         )
 
@@ -63,7 +63,6 @@ class GPT(nn.Module):
         # transformer
         self.blocks = nn.Sequential(*[Block(config) for _ in range(config.n_layer)])
         self.block_size = config.block_size
-        self.apply(self._init_weights)
 
         print("Number of parameters: {}".format(sum(p.numel() for p in self.parameters())))
 
@@ -72,7 +71,6 @@ class GPT(nn.Module):
 
     def forward(self, idx, targets=None):
         b, t = idx.size()
-        assert(t <= self.block_size, "Cannot forward, model block size is exhausted."
 
         # forward the GPT model
         token_embeddings = self.tok_emb(idx)
