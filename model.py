@@ -34,7 +34,7 @@ class Block(nn.Module):
         self.attn = nn.MultiheadAttention(
             embed_dim=config.n_embd,
             num_heads=config.n_head,
-            dropout=config.attn_pdrop
+            dropout=config.attn_pdrop,
             bias=True
         )
 
