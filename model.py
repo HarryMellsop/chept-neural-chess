@@ -1,7 +1,7 @@
 import math
 import torch
 import torch.nn as nn
-from torch.nn import functional as F
+import attention
 
 
 class GPTConfig:
@@ -30,13 +30,7 @@ class Block(nn.Module):
 
         self.ln1 = nn.LayerNorm(config.n_embd)
         self.ln2 = nn.LayerNorm(config.n_embd)
-
-        self.attn = nn.MultiheadAttention(
-            embed_dim=config.n_embd,
-            num_heads=config.n_head,
-            dropout=config.attn_pdrop,
-            bias=True
-        )
+        self.attn = attention.CausalSelfAttention(config)
 
         self.mlp = nn.Sequential(
             nn.Linear(config.n_embd, 4 * config.n_embd),
@@ -62,6 +56,9 @@ class GPT(nn.Module):
 
         # transformer
         self.blocks = nn.Sequential(*[Block(config) for _ in range(config.n_layer)])
+
+        self.ln_f = nn.LayerNorm(config.n_embd)
+        self.head = nn.Linear(config.n_embd, config.vocab_size, bias=False)
         self.block_size = config.block_size
 
         print("Number of parameters: {}".format(sum(p.numel() for p in self.parameters())))
@@ -80,9 +77,13 @@ class GPT(nn.Module):
         x = self.ln_f(x)
         logits = self.head(x)
 
-        # if we are given some desired targets also calculate the loss
+        # calculate loss
         loss = None
         if targets is not None:
-            loss = F.cross_entropy(logits.view(-1, logits.size(-1)), targets.view(-1), ignore_index=0)
+            loss = nn.functional.cross_entropy(
+                input=logits.view(-1, logits.size(-1)), 
+                target=targets.view(-1), 
+                ignore_index=0
+            )
 
         return logits, loss
