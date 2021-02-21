@@ -55,6 +55,7 @@ class GPT(nn.Module):
         self.drop = nn.Dropout(config.embd_pdrop)
 
         # transformer
+        self.ln_f = nn.LayerNorm(config.n_embd)
         self.blocks = nn.Sequential(*[Block(config) for _ in range(config.n_layer)])
         self.block_size = config.block_size
 
