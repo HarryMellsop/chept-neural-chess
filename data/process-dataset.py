@@ -1,12 +1,18 @@
 import tqdm
+import os
 
 print("Welcome to ChePT Data Preprocessor")
 
 print("Now processing kingbase-ftfy.txt")
 
 unprocessed_kingbase_lines = open("./data/datasets/kingbase-ftfy.txt", "r").readlines()
+write_folder = "./data/datasets-cleaned/"
+write_file = os.path.join(write_folder, 'kingbase_cleaned.txt')
 
-processed_kingbase_lines = open("./data/datasets-cleaned/kingbase_cleaned.txt", "w")
+if not os.path.exists(write_folder):
+    os.makedirs(write_folder)
+
+processed_kingbase_lines = open(write_file, "w")
 
 line_length = []
 for line in tqdm.tqdm(unprocessed_kingbase_lines):
