@@ -5,7 +5,6 @@ from tqdm import tqdm
 from torch.nn import functional as F
 import random
 import argparse
-random.seed(0)
 
 import dataset
 import model

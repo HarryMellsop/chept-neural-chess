@@ -21,8 +21,8 @@ if [ -e "./data/datasets/35-million-chess-games.zip" ]
 then
 	echo "Kaggle Dataset Downloaded"
 else
-	cd data/datasets 
-	~/.local/bin/kaggle datasets download milesh1/35-million-chess-games
+	cd data/datasets
+	kaggle datasets download milesh1/35-million-chess-games
 	cd ../..
 fi
 
