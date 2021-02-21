@@ -30,12 +30,14 @@ argp.add_argument('--finetune_corpus_path',
 argp.add_argument('--eval_corpus_path',
     help="Path of the corpus to evaluate on", default=None)
 argp.add_argument('--outputs_path', default=None)
+argp.add_argument('--block_size', type=int, default=128,
+                  help='Block size to use. Default 128.')
 args = argp.parse_args()
 
 # Save the device
 device = torch.cuda.current_device() if torch.cuda.is_available() else 'cpu'
 
-block_size = 128
+block_size = args.block_size
 text = open(args.pretrain_corpus_path).read()
 pretrain_dataset = dataset.CharCorruptionDataset(text, block_size)
 
