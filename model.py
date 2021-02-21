@@ -10,10 +10,9 @@ class GPTConfig:
     attn_pdrop = 0.1
     additive = False
 
-    def __init__(self, vocab_size, block_size, attention_type, **kwargs):
+    def __init__(self, vocab_size, block_size, **kwargs):
         self.vocab_size = vocab_size
         self.block_size = block_size
-        self.attention_type = attention_type
         for k,v in kwargs.items():
             setattr(self, k, v)
 
@@ -31,7 +30,6 @@ class Block(nn.Module):
         self.ln1 = nn.LayerNorm(config.n_embd)
         self.ln2 = nn.LayerNorm(config.n_embd)
         self.attn = attention.CausalSelfAttention(config)
-
         self.mlp = nn.Sequential(
             nn.Linear(config.n_embd, 4 * config.n_embd),
             nn.GELU(),

@@ -2,3 +2,4 @@
 data/datasets/*
 .vscode
 data/datasets-cleaned/*
+__pycache__

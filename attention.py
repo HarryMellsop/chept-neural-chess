@@ -37,7 +37,7 @@ class CausalSelfAttention(nn.Module):
 
         # causal self-attention
         att = (q @ k.transpose(-2, -1)) * (1.0 / math.sqrt(k.size(-1)))
-        att = att.masked_fill(self.mask[:,:,:T,:T] == 0, -1e10)
+        att = att.masked_fill(self.mask[:, :, :T, :T] == 0, -1e10)
         att = F.softmax(att, dim=-1)
         att = self.attn_drop(att)
 
