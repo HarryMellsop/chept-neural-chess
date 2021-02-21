@@ -1,7 +1,6 @@
 import math
 import torch
 import torch.nn as nn
-from torch.nn import functional as F
 
 
 class GPTConfig:
@@ -31,6 +30,10 @@ class Block(nn.Module):
         self.ln1 = nn.LayerNorm(config.n_embd)
         self.ln2 = nn.LayerNorm(config.n_embd)
 
+        self.Q = nn.Linear(config.n_embd, config.n_embd)
+        self.K = nn.Linear(config.n_embd, config.n_embd)
+        self.V = nn.Linear(config.n_embd, config.n_embd)
+
         self.attn = nn.MultiheadAttention(
             embed_dim=config.n_embd,
             num_heads=config.n_head,
@@ -46,7 +49,14 @@ class Block(nn.Module):
         )
     
     def forward(self, x):
-        x = x + self.attn(self.ln1(x))
+
+        x = self.ln1(x)
+
+        query = self.Q(x)
+        key = self.K(x)
+        value = self.V(x)
+
+        x = x + self.attn(query, key, value)
         x = x + self.mlp(self.ln2(x))
         return x
 
@@ -80,9 +90,13 @@ class GPT(nn.Module):
         x = self.ln_f(x)
         logits = self.head(x)
 
-        # if we are given some desired targets also calculate the loss
+        # calculate loss
         loss = None
         if targets is not None:
-            loss = F.cross_entropy(logits.view(-1, logits.size(-1)), targets.view(-1), ignore_index=0)
+            loss = nn.functional.cross_entropy(
+                input=logits.view(-1, logits.size(-1)), 
+                target=targets.view(-1), 
+                ignore_index=0
+            )
 
         return logits, loss
