@@ -63,7 +63,6 @@ class GPT(nn.Module):
         # transformer
         self.blocks = nn.Sequential(*[Block(config) for _ in range(config.n_layer)])
         self.block_size = config.block_size
-        self.apply(self._init_weights)
 
         print("Number of parameters: {}".format(sum(p.numel() for p in self.parameters())))
 
@@ -72,7 +71,6 @@ class GPT(nn.Module):
 
     def forward(self, idx):
         b, t = idx.size()
-        assert(t <= self.block_size, "Cannot forward, model block size is exhausted."
 
         # forward the GPT model
         token_embeddings = self.tok_emb(idx)
