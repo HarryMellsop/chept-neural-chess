@@ -30,5 +30,5 @@ if [ -e "./data/datasets/all_with_filtered_anotations_since1998.txt" ]
 then
 	echo "Kaggle Dataset Unzipped"
 else
-	unzip ./data/datasets/35-million-chess-games.zip
+	unzip ./data/datasets/35-million-chess-games.zip -d ./data/datasets/
 fi
