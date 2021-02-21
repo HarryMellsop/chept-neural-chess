@@ -22,7 +22,7 @@ then
 	echo "Kaggle Dataset Downloaded"
 else
 	cd data/datasets 
-	kaggle datasets download milesh1/35-million-chess-games
+	~/.local/bin/kaggle datasets download milesh1/35-million-chess-games
 	cd ../..
 fi
 
