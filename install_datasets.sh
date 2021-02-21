@@ -3,8 +3,20 @@ if ! command -v kaggle &> /dev/null
 then
 	echo "Kaggle is not found"
 	pip3 install --user kaggle
+	pip install --user kaggle
+	pip3 install kaggle
+	pip install kaggle
 else
 	echo "Kaggle is installed"
+fi
+
+echo "Checking GSUtil Install..."
+if ! command -v gsutil &> /dev/null
+then
+	echo "GSUtil is not found"
+	pip install GSUtil
+else
+	echo "GSUtil is installed"
 fi
 
 echo "Checking Kingbase Dataset... (if this fails, check that GSUtil is installed and authenticated)"
