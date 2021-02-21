@@ -2,7 +2,7 @@ echo "Checking Kaggle Install..."
 if ! command -v kaggle &> /dev/null
 then
 	echo "Kaggle is not found"
-	pip install --user kaggle
+	pip3 install --user kaggle
 else
 	echo "Kaggle is installed"
 fi
