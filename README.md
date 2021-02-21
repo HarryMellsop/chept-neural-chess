@@ -1,4 +1,4 @@
-# chept-neural-chess
+# ChePT
 
 A Deep Transformer-Based Neural Chess Engine.  Baseline implementation using minGPT-2 architecture, and custom architectures.
 
