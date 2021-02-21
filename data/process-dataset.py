@@ -6,6 +6,10 @@ import os
 def preprocess_kingbase():
     print("Now processing kingbase-ftfy.txt")
 
+    write_folder = "./data/datasets-cleaned/"
+    if not os.path.exists(write_folder):
+        os.makedirs(write_folder)
+
     # check if this file has already been preprocessed
     if os.path.exists("./data/datasets-cleaned/kingbase_cleaned.txt"):
         response = ""
@@ -16,7 +20,7 @@ def preprocess_kingbase():
                 return
 
         os.remove("./data/datasets-cleaned/kingbase_cleaned.txt")
-
+    
     unprocessed_kingbase_lines = open("./data/datasets/kingbase-ftfy.txt", "r").readlines()
 
     processed_kingbase_lines = open("./data/datasets-cleaned/kingbase_cleaned.txt", "w")
@@ -38,6 +42,10 @@ def preprocess_kingbase():
 
 def preprocess_kaggle():
     print("Now preprocessing all_with_filtered_anotations_since1998.txt")
+
+    write_folder = "./data/datasets-cleaned/"
+    if not os.path.exists(write_folder):
+        os.makedirs(write_folder)
 
     # check if this file has already been preprocessed
     if os.path.exists("./data/datasets-cleaned/kaggle_cleaned.txt"):
