@@ -70,7 +70,7 @@ class GPT(nn.Module):
     def get_block_size(self):
         return self.block_size
 
-    def forward(self, idx):
+    def forward(self, idx, targets=None):
         b, t = idx.size()
         assert(t <= self.block_size, "Cannot forward, model block size is exhausted."
 
@@ -82,4 +82,9 @@ class GPT(nn.Module):
         x = self.ln_f(x)
         logits = self.head(x)
 
-        return logits
+        # if we are given some desired targets also calculate the loss
+        loss = None
+        if targets is not None:
+            loss = F.cross_entropy(logits.view(-1, logits.size(-1)), targets.view(-1), ignore_index=0)
+
+        return logits, loss
