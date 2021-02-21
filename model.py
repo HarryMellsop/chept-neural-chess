@@ -1,6 +1,7 @@
 import math
 import torch
 import torch.nn as nn
+import attention
 
 
 class GPTConfig:
@@ -29,17 +30,7 @@ class Block(nn.Module):
 
         self.ln1 = nn.LayerNorm(config.n_embd)
         self.ln2 = nn.LayerNorm(config.n_embd)
-
-        self.Q = nn.Linear(config.n_embd, config.n_embd)
-        self.K = nn.Linear(config.n_embd, config.n_embd)
-        self.V = nn.Linear(config.n_embd, config.n_embd)
-
-        self.attn = nn.MultiheadAttention(
-            embed_dim=config.n_embd,
-            num_heads=config.n_head,
-            dropout=config.attn_pdrop,
-            bias=True
-        )
+        self.attn = attention.CausalSelfAttention(config)
 
         self.mlp = nn.Sequential(
             nn.Linear(config.n_embd, 4 * config.n_embd),
@@ -49,14 +40,7 @@ class Block(nn.Module):
         )
     
     def forward(self, x):
-
-        x = self.ln1(x)
-
-        query = self.Q(x)
-        key = self.K(x)
-        value = self.V(x)
-
-        x = x + self.attn(query, key, value)
+        x = x + self.attn(self.ln1(x))
         x = x + self.mlp(self.ln2(x))
         return x
 
