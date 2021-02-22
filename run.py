@@ -17,8 +17,9 @@ device = torch.cuda.current_device() if torch.cuda.is_available() else 'cpu'
 
 # load pretrain dataset
 games = open('data/datasets-cleane/kingbase_cleaned.txt').read()
-games = games[:int(len(games) / 10)]
-pretrain_dataset = dataset.PretrainDataset(games, block_size=block_size)
+# games = games[:int(len(games) / 10)]
+game = games[:1000]
+pretrain_dataset = dataset.ChessMoveDataset(games, block_size=block_size)
 
 # load model
 mconf = model.GPTConfig(
