@@ -14,6 +14,8 @@ class ChessMoveDataset(Dataset):
         assert self.PAD_CHAR not in chars
         chars.insert(0, self.PAD_CHAR)
 
+        assert self.MASK_CHAR not in chars
+        chars.insert(0, self.MASK_CHAR)
         self.stoi = { ch:i for i,ch in enumerate(chars) }
         self.itos = { i:ch for i,ch in enumerate(chars) }
 

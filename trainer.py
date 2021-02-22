@@ -47,7 +47,6 @@ class Trainer:
 
     def save_checkpoint(self, path):
         ckpt_model = self.model.module if hasattr(self.model, "module") else self.model
-        print("saving %s", path)
         torch.save(ckpt_model.state_dict(), path)
 
     def train(self):
@@ -137,4 +136,4 @@ class Trainer:
         for epoch in range(config.max_epochs):
             run_epoch('train')
             if self.test_dataset is not None: run_epoch('test')
-            self.save_checkpoint()
+            self.save_checkpoint('ckpt/model.final.params')
