@@ -42,7 +42,7 @@ PAD_CHAR = u'\u25A1'
 
 def get_prediction(game_str):
 
-    x = game_str + PAD_CHAR * (block_size - len(game_str))
+    x = game_str
     x = torch.tensor([stoi[s] for s in x], dtype=torch.long)
     x = x.view(1, -1)
 
@@ -52,24 +52,26 @@ def get_prediction(game_str):
         logits, _ = model(x)
         logits = torch.squeeze(logits)
         y_hat = torch.argmax(logits, dim=-1)
-        y_hat = [itos[y_hat[t].item()] for t in y_hat]
+        y_hat = [itos[t.item()] for t in y_hat]
 
     pred = y_hat[len(game_str) - 1]
     return pred
 
 # run inference loop
+game_str = ''
+move_it = 1
+print('Welcome to Chess Bot. Enter moves below to start a game.')
+
 while True:
-    print('Welcome to Chess Bot. Enter moves below to start a game.')
+    user_move = input('Enter move: ')
 
-    user_submission = input('Enter move: ')
-    if user_submission is 'quit': break
+    game_str += str(move_it) + '.'
+    game_str += user_move + ' '
 
-    game_str = '1.c4 c5 2.Nc3 Nc'
+    bot_move = ''
+    while not bot_move.endswith(' '):
+        pred = get_prediction(game_str + bot_move)
+        bot_move += pred
 
-    move_str = ''
-    pred = get_prediction(game_str)    
-    while pred != ' ':
-        move_str += pred
-        pred = get_prediction(game_str + move_str)
-
-    print(move_str)
+    print('Bot plays: {}'.format(bot_move))
+    game_str += bot_move
