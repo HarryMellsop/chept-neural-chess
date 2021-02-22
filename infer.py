@@ -64,7 +64,7 @@ while True:
     user_submission = input('Enter move: ')
     if user_submission is 'quit': break
 
-    game_str = '1.c4 c5 2.Nc3 Nc'
+    game_str = '1.d4 d5 2.c4 e6 3.Nc3 Nf6 4.cxd5 exd5 5.Bg5 Be7 6.e3 Ne4 7.Bxe7 Nxc3 8.Bxd8 Nxd1 9.Bxc7 Nxb2 10.Rb1 .Nc4 11.Bxc4 .dxc4 12.Ne2 .O-O 13.Nc3 .b6 14.d5'
 
     move_str = ''
     pred = get_prediction(game_str)    

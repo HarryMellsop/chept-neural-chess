@@ -2,6 +2,7 @@ import tqdm
 import matplotlib.pyplot as plt
 import numpy as np
 import os
+import random
 
 def preprocess_kingbase():
     print("Now processing kingbase-ftfy.txt")
@@ -83,8 +84,43 @@ def preprocess_kaggle():
     plt.xlabel('Sequence Length')
     plt.show()
 
+def test_chess_move_dataset_approach():
+    BLOCK_SIZE = 1024
+
+    processed_kingbase_lines = open("./data/datasets-cleaned/kingbase_cleaned.txt", "r").readlines()
+
+    game = processed_kingbase_lines[0]
+
+    moves = [move for move in game.split()]
+    print(moves)
+    index = random.randint(0, len(moves) - 1)
+    masked_move = moves[index]
+    print(masked_move)
+    if index % 2 == 0:
+        masked_move = masked_move[2:]
+        print(masked_move)
+        moves[index] = moves[index][:2]
+    else:
+        moves[index] = ""
+
+    # now, we have masked_move as the actual masked move, and the moves list has been left as if only the move itself were removed
+
+    prefix = " ".join(moves[:index + 1])
+    suffix = " ".join(moves[index + 1:])
+    print(prefix)
+    print(suffix)
+
+    MASK_CHAR = u"\u2047"
+
+    output = prefix + MASK_CHAR + " " + suffix + MASK_CHAR + masked_move
+
+    print(output)
+
+
 def main():
     print("Welcome to ChePT Data Preprocessor")
+    test_chess_move_dataset_approach()
+    return
     preprocess_kingbase()
     preprocess_kaggle()
 
