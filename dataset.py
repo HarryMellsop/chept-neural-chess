@@ -47,5 +47,6 @@ class PretrainDataset(Dataset):
 
 if __name__ == '__main__':
 
-    games = open('data/datasets-cleaned/kingbase_cleaned.txt').read()
-    ds = PretrainDataset(games)
+    games = open('data/datasets-cleaned/kingbase_cleaned.txt').read()[:1000]
+    print(games)
+    # ds = PretrainDataset(games)
