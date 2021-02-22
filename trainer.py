@@ -45,11 +45,9 @@ class Trainer:
             self.device = torch.cuda.current_device()
             self.model = torch.nn.DataParallel(self.model).to(self.device)
 
-    def save_checkpoint(self):
-        if self.config.ckpt_path is not None:
-            ckpt_model = self.model.module if hasattr(self.model, "module") else self.model
-            print("saving %s", self.config.ckpt_path)
-            torch.save(ckpt_model.state_dict(), self.config.ckpt_path)
+    def save_checkpoint(self, path):
+        ckpt_model = self.model.module if hasattr(self.model, "module") else self.model
+        torch.save(ckpt_model.state_dict(), path)
 
     def train(self):
         model, config = self.model, self.config
@@ -78,11 +76,12 @@ class Trainer:
             )
 
             losses = []
+            min_loss = float('infinity')
             pbar = tqdm(enumerate(loader), total=len(loader)) if is_train else enumerate(loader)
             for it, (x, y) in pbar:
 
                 if it % 1000 == 0:
-                    self.save_checkpoint()
+                    self.save_checkpoint('ckpt/model.iter.params')
 
                 # place data on the correct device
                 x = x.to(self.device)
@@ -93,6 +92,10 @@ class Trainer:
                     logits, loss = model(x, y)
                     loss = loss.mean()
                     losses.append(loss.item())
+
+                    if loss < min_loss:
+                        min_loss = loss
+                        self.save_checkpoint('ckpt/model.best.params')
 
                 if is_train:
 
@@ -133,4 +136,4 @@ class Trainer:
         for epoch in range(config.max_epochs):
             run_epoch('train')
             if self.test_dataset is not None: run_epoch('test')
-            self.save_checkpoint()
+            self.save_checkpoint('ckpt/model.final.params')
