@@ -16,7 +16,8 @@ block_size = 1024
 device = torch.cuda.current_device() if torch.cuda.is_available() else 'cpu'
 
 # load pretrain dataset
-games = open('data/datasets-cleaned/kaggle_cleaned.txt').read()
+games = open('data/datasets-cleaned/kingbase_cleaned.txt').read()
+games = games[:int(len(games) / 10)]
 pretrain_dataset = dataset.PretrainDataset(games, block_size=block_size)
 
 # load model
@@ -30,8 +31,8 @@ mconf = model.GPTConfig(
 model = model.GPT(mconf)
 
 train_config = trainer.TrainerConfig(
-    max_epochs=650,
-    batch_size=32,
+    max_epochs=5,
+    batch_size=16,
     learning_rate=6e-3,
     lr_decay=True, 
     warmup_tokens=512*20, 

@@ -23,7 +23,7 @@ class TrainerConfig:
     final_tokens = 260e9 # (at what point we reach 10% of original LR)
 
     # checkpoint settings
-    ckpt_path = 'ckpt/'
+    ckpt_path = 'ckpt/pretrain.model.params'
     num_workers = 0
 
     def __init__(self, **kwargs):
@@ -80,6 +80,9 @@ class Trainer:
             losses = []
             pbar = tqdm(enumerate(loader), total=len(loader)) if is_train else enumerate(loader)
             for it, (x, y) in pbar:
+
+                if it % 1000 == 0:
+                    self.save_checkpoint()
 
                 # place data on the correct device
                 x = x.to(self.device)
