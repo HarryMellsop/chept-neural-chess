@@ -40,6 +40,23 @@ with open('cache/itos.pkl', 'rb') as f:
 cur_game = ''
 PAD_CHAR = u'\u25A1'
 
+def get_prediction(game_str):
+
+    x = game_str + PAD_CHAR * (block_size - len(game_str))
+    x = torch.tensor([stoi[s] for s in x], dtype=torch.long)
+    x = x.view(1, -1)
+
+    model.eval()
+    with torch.no_grad():
+
+        logits, _ = model(x)
+        logits = torch.squeeze(logits)
+        y_hat = torch.argmax(logits, dim=-1)
+        y_hat = [itos[y_hat[t].item()] for t in y_hat]
+
+    pred = y_hat[len(game_str) - 1]
+    return pred
+
 # run inference loop
 while True:
     print('Welcome to Chess Bot. Enter moves below to start a game.')
@@ -47,17 +64,12 @@ while True:
     user_submission = input('Enter move: ')
     if user_submission is 'quit': break
 
-    print(itos)
-    game_str = '1.c4 c5 2.Nc3 Nc6'
+    game_str = '1.c4 c5 2.Nc3 Nc'
 
-    x = game_str + PAD_CHAR * (block_size - len(game_str))
-    x = torch.tensor([stoi[c] for c in x], dtype=torch.long)
-    x = x.view(1, -1)
+    move_str = ''
+    pred = get_prediction(game_str)    
+    while pred != ' ':
+        move_str += pred
+        pred = get_prediction(game_str + move_str)
 
-    model.eval()
-    with torch.no_grad():
-        logits, _ = model(x)
-        logits = torch.squeeze(logits)
-        y_hat = torch.argmax(logits, dim=-1)
-        y_hat = [itos[y_hat[t].item()] for t in y_hat]
-        print(''.join(y_hat))
+    print(move_str)
