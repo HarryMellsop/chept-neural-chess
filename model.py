@@ -1,6 +1,7 @@
 import math
 import torch
 import torch.nn as nn
+import attention
 
 
 class GPTConfig:
@@ -26,40 +27,19 @@ class Block(nn.Module):
     def __init__(self, config):
         super().__init__()
 
-        self.register_buffer('mask', torch.tril(torch.ones(config.block_size, config.block_size)))
-
         self.ln1 = nn.LayerNorm(config.n_embd)
         self.ln2 = nn.LayerNorm(config.n_embd)
-
-        self.Q = nn.Linear(config.n_embd, config.n_embd)
-        self.K = nn.Linear(config.n_embd, config.n_embd)
-        self.V = nn.Linear(config.n_embd, config.n_embd)
-
-        self.attn = nn.MultiheadAttention(
-            embed_dim=config.n_embd,
-            num_heads=config.n_head, 
-            dropout=config.attn_pdrop
-        )
-        
+        self.attn = attention.CausalSelfAttention(config)
         self.mlp = nn.Sequential(
             nn.Linear(config.n_embd, 4 * config.n_embd),
             nn.GELU(),
             nn.Linear(4 * config.n_embd, config.n_embd),
             nn.Dropout(config.resid_pdrop)
         )
-
+    
     def forward(self, x):
-        B, T, C = x.size()
-
-        ln_x = self.ln1(x)
-
-        query = self.Q(ln_x).transpose(0, 1)
-        key = self.K(ln_x).transpose(0, 1)
-        value = self.V(ln_x).transpose(0, 1)
-        
-        x = x + self.attn(query, key, value, attn_mask=self.mask[:T, :T])[0].transpose(0, 1)
-        x = x + self.mlp(self.ln2(x))
-
+        x += self.attn(self.ln1(x))
+        x += self.mlp(self.ln2(x))
         return x
 
 

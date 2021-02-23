@@ -10,7 +10,7 @@ import trainer
 import utils
 
 # LOAD HYPERPARAMS
-block_size = 1024
+block_size = 512
 
 # save the device
 device = torch.cuda.current_device() if torch.cuda.is_available() else 'cpu'
@@ -24,7 +24,7 @@ pretrain_dataset = dataset.PretrainDataset(games, block_size=block_size)
 mconf = model.GPTConfig(
     vocab_size=pretrain_dataset.vocab_size, 
     block_size=pretrain_dataset.block_size, 
-    n_layer=4, 
+    n_layer=16, 
     n_head=8,
     n_embd=256
 )
@@ -33,12 +33,9 @@ model = model.GPT(mconf)
 train_config = trainer.TrainerConfig(
     max_epochs=5,
     batch_size=16,
-    learning_rate=6e-3,
-    lr_decay=True, 
-    warmup_tokens=512*20, 
-    final_tokens=200 * len(pretrain_dataset) * block_size,
+    learning_rate=1e-3,
     num_workers=4
 )
 
-trainer = trainer.Trainer(model, pretrain_dataset, None, train_config)
+trainer = trainer.Trainer(model, pretrain_dataset, train_config)
 trainer.train()

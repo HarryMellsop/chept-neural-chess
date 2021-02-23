@@ -63,6 +63,7 @@ class ChessMoveDataset(Dataset):
         x = torch.tensor([self.stoi[c] for c in input], dtype=torch.long)
         y = torch.tensor([self.stoi[c] for c in output], dtype=torch.long)
         return x, y
+    
 
 class FullEmbeddingPretrainDataset(Dataset):
 
@@ -94,8 +95,6 @@ class FullEmbeddingPretrainDataset(Dataset):
     def __getitem__(self, idx):
         game = self.data[idx].split()
         game += self.PAD_CHAR * (self.block_size - len(game))
-
-
 
 
 class PretrainDataset(Dataset):
