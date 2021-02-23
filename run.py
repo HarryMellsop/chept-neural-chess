@@ -14,6 +14,7 @@ block_size = 512
 
 # save the device
 device = torch.cuda.current_device() if torch.cuda.is_available() else 'cpu'
+torch.autograd.set_detect_anomaly(True)
 
 # load pretrain dataset
 games = open('data/datasets-cleaned/kingbase_cleaned.txt').read()

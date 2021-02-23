@@ -3,6 +3,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 import random
+import re
+
+max_game_length = 512
 
 def preprocess_kingbase():
     print("Now processing kingbase-ftfy.txt")
@@ -30,7 +33,8 @@ def preprocess_kingbase():
     for line in tqdm.tqdm(unprocessed_kingbase_lines):
         split_line = line.split()
         output_line = " ".join(split_line[6:-1]) + "\n"
-        if len(output_line) <= 1024:
+        output_line = re.sub(r'[0-9]+\.', '', output_line)
+        if len(output_line) <= max_game_length:
             processed_kingbase_lines.writelines(output_line)
             line_length.append(len(output_line))
 
@@ -40,6 +44,8 @@ def preprocess_kingbase():
     plt.ylabel('Relative Frequency')
     plt.xlabel('Sequence Length')
     plt.show()
+
+    print("Total games in the post-processed file: %d", len(line_length))
 
 def preprocess_kaggle():
     print("Now preprocessing all_with_filtered_anotations_since1998.txt")
@@ -73,7 +79,7 @@ def preprocess_kaggle():
                 split_line[index] = token[1:]
         output_line = " ".join(split_line[17:]) + "\n"
         
-        if len(output_line) <= 1024:
+        if len(output_line) <= max_game_length:
             processed_kaggle_lines.writelines(output_line)
             line_length.append(len(output_line))
 
