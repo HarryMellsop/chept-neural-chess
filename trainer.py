@@ -58,7 +58,6 @@ class Trainer:
                 num_workers=config.num_workers
             )
 
-            min_loss = float('infinity')
             pbar = tqdm(enumerate(loader), total=len(loader))
             for it, (x, y) in pbar:
                 if it % 1000 == 0:
@@ -72,10 +71,6 @@ class Trainer:
                 with torch.set_grad_enabled(True):
                     logits, loss = model(x, y)
                     loss = loss.mean()
-
-                    if loss < min_loss:
-                        min_loss = loss
-                        self.save_checkpoint('ckpt/model.best.params')
 
                 # backprop and update the parameters
                 model.zero_grad()
