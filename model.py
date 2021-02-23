@@ -38,8 +38,8 @@ class Block(nn.Module):
         )
     
     def forward(self, x):
-        x += self.attn(self.ln1(x))
-        x += self.mlp(self.ln2(x))
+        x = x + self.attn(self.ln1(x))
+        x = x + self.mlp(self.ln2(x))
         return x
 
 
