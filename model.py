@@ -58,14 +58,8 @@ class Block(nn.Module):
             query = self.Q(ln_x).transpose(0, 1)
             key = self.K(ln_x).transpose(0, 1)
             value = self.V(ln_x).transpose(0, 1)
-
-            out = self.attn(query, key, value, attn_mask=self.mask[:T, :T])[0].transpose(0, 1)
-
-            print(x.shape)
-            print(out.shape)
-            print(query.shape)
-
-            x = x + out
+            
+            x = x + self.attn(query, key, value, attn_mask=self.mask[:T, :T])[0].transpose(0, 1)
             x = x + self.mlp(self.ln2(x))
 
         return x
