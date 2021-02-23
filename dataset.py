@@ -92,7 +92,10 @@ class FullEmbeddingPretrainDataset(Dataset):
         return len(self.data)
 
     def __getitem__(self, idx):
-        
+        game = self.data[idx].split()
+        game += self.PAD_CHAR * (self.block_size - len(game))
+
+
 
 
 class PretrainDataset(Dataset):
