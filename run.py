@@ -16,9 +16,9 @@ block_size = 1024
 device = torch.cuda.current_device() if torch.cuda.is_available() else 'cpu'
 
 # load pretrain dataset
-games = open('data/datasets-cleaned/kingbase_cleaned.txt').read()
+games = open('data/datasets-cleaned/kingbase_cleaned.txt').readlines()
 games = games[:int(len(games) / 10)]
-pretrain_dataset = dataset.ChessMoveDataset(games, block_size=block_size)
+pretrain_dataset = dataset.FullEmbeddingPretrainDataset(games, block_size=block_size)
 
 # load model
 mconf = model.GPTConfig(

@@ -29,7 +29,7 @@ mconf = model.GPTConfig(
 
 # load model weights
 model = model.GPT(mconf)
-model.load_state_dict(torch.load('ckpt/pretrain.model.params', map_location=torch.device('cpu')))
+# model.load_state_dict(torch.load('ckpt/pretrain.model.params', map_location=torch.device('cpu')))
 
 # load dataset
 with open('cache/stoi.pkl', 'rb') as f: 
