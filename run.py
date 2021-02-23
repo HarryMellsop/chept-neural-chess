@@ -26,7 +26,7 @@ mconf = model.GPTConfig(
     vocab_size=pretrain_dataset.vocab_size, 
     block_size=pretrain_dataset.block_size, 
     n_layer=4, 
-    n_head=8, 
+    n_head=8,
     n_embd=256
 )
 model = model.GPT(mconf)

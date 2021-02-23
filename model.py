@@ -1,7 +1,6 @@
 import math
 import torch
 import torch.nn as nn
-import attention
 
 
 class GPTConfig:
@@ -52,13 +51,27 @@ class Block(nn.Module):
     def forward(self, x):
         B, T, C = x.size()
 
-        ln_x = self.ln1(x)
-        query = self.Q(ln_x).transpose(0, 1)
-        key = self.K(ln_x).transpose(0, 1)
-        value = self.V(ln_x).transpose(0, 1)
+        with torch.autograd.set_detect_anomaly(True):
 
+<<<<<<< HEAD
         x = x + self.attn(query, key, value, attn_mask=self.mask[:T, :T])[0].transpose(0, 1)
         x = x + self.mlp(self.ln2(x))
+=======
+            ln_x = self.ln1(x)
+
+            query = self.Q(ln_x).transpose(0, 1)
+            key = self.K(ln_x).transpose(0, 1)
+            value = self.V(ln_x).transpose(0, 1)
+
+            out = self.attn(query, key, value, attn_mask=self.mask[:T, :T])[0].transpose(0, 1)
+
+            print(x.shape)
+            print(out.shape)
+            print(query.shape)
+
+            x = x + out
+            x = x + self.mlp(self.ln2(x))
+>>>>>>> 5c976fd38bc93c4ba8364873f4a64fd9c572875f
 
         return x
 
