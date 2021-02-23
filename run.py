@@ -18,22 +18,22 @@ torch.autograd.set_detect_anomaly(True)
 
 # load pretrain dataset
 games = open('data/datasets-cleaned/kingbase_cleaned.txt').read()
-games = games[:int(len(games) / 10)]
+#games = games[:int(len(games) / 10)]
 pretrain_dataset = dataset.PretrainDataset(games, block_size=block_size)
 
 # load model
 mconf = model.GPTConfig(
     vocab_size=pretrain_dataset.vocab_size, 
     block_size=pretrain_dataset.block_size, 
-    n_layer=16, 
+    n_layer=8, 
     n_head=8,
-    n_embd=256
+    n_embd=128
 )
 model = model.GPT(mconf)
 
 train_config = trainer.TrainerConfig(
-    max_epochs=5,
-    batch_size=16,
+    max_epochs=1,
+    batch_size=32,
     learning_rate=1e-3,
     num_workers=4
 )
