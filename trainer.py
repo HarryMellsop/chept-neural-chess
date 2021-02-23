@@ -101,8 +101,7 @@ class Trainer:
 
                     # backprop and update the parameters
                     model.zero_grad()
-                    with torch.autograd.set_detect_anomaly(True):
-                        loss.backward()
+                    loss.backward()
                     torch.nn.utils.clip_grad_norm_(model.parameters(), config.grad_norm_clip)
                     optimizer.step()
 
