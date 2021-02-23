@@ -42,7 +42,7 @@ PAD_CHAR = u'\u25A1'
 
 def get_prediction(game_str):
 
-    x = game_str
+    x = game_str + PAD_CHAR * (block_size - len(game_str))
     x = torch.tensor([stoi[s] for s in x], dtype=torch.long)
     x = x.view(1, -1)
 

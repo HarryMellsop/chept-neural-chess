@@ -34,12 +34,12 @@ class Block(nn.Module):
             nn.Linear(config.n_embd, 4 * config.n_embd),
             nn.GELU(),
             nn.Linear(4 * config.n_embd, config.n_embd),
-            nn.Dropout(config.resid_pdrop),
+            nn.Dropout(config.resid_pdrop)
         )
     
     def forward(self, x):
-        x = x + self.attn(self.ln1(x))
-        x = x + self.mlp(self.ln2(x))
+        x += self.attn(self.ln1(x))
+        x += self.mlp(self.ln2(x))
         return x
 
 
@@ -52,14 +52,13 @@ class GPT(nn.Module):
         self.pos_emb = nn.Parameter(torch.zeros(1, config.block_size, config.n_embd))
         self.drop = nn.Dropout(config.embd_pdrop)
 
-        # transformer
+        # transformer network
         self.blocks = nn.Sequential(*[Block(config) for _ in range(config.n_layer)])
-
         self.ln_f = nn.LayerNorm(config.n_embd)
         self.head = nn.Linear(config.n_embd, config.vocab_size, bias=False)
         self.block_size = config.block_size
 
-        print("Number of parameters: {}".format(sum(p.numel() for p in self.parameters())))
+        print('Number of parameters: {}'.format(sum(p.numel() for p in self.parameters())))
 
     def get_block_size(self):
         return self.block_size
@@ -67,15 +66,14 @@ class GPT(nn.Module):
     def forward(self, idx, targets=None):
         b, t = idx.size()
 
-        # forward the GPT model
         token_embeddings = self.tok_emb(idx)
         position_embeddings = self.pos_emb[:, :t, :]
         x = self.drop(token_embeddings + position_embeddings)
+
         x = self.blocks(x)
         x = self.ln_f(x)
         logits = self.head(x)
 
-        # calculate loss
         loss = None
         if targets is not None:
             loss = nn.functional.cross_entropy(
