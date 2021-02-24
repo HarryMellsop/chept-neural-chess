@@ -17,4 +17,4 @@ Training can be achieved through
 
     $ python run.py
     
-Inference - and playing the bot with a gui - can be achieved through the interactive notebook `gui_inference.ipynb`.  Note that you will need to `brew install stockfish` in order to run comparative inference of the neural bot against Stockfish, and provide move support where the model otherwise might struggle (we're working on this!)
+Inference - and playing the bot with a gui - can be achieved through the interactive notebook `gui_inference.ipynb`.  Note that you will need to `brew install stockfish` in order to run comparative inference of the neural bot against Stockfish, and provide move support where the model otherwise might struggle (we're working on this!).  The parameter file is currently not in git because of how large it is.  TODO: enable Git LFS, or provide another way for users to download the parameter file.
