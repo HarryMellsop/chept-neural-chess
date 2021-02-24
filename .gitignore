@@ -3,3 +3,4 @@ data/datasets/*
 .vscode
 data/datasets-cleaned/*
 __pycache__
+ckpt/*

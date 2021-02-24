@@ -3,6 +3,7 @@ import torch
 from torch.utils.data import Dataset
 import argparse
 import math
+import pickle
 
 class ChessMoveDataset(Dataset):
     def __init__(self, data, block_size=1024):
@@ -110,6 +111,12 @@ class PretrainDataset(Dataset):
 
         self.stoi = { ch:i for i,ch in enumerate(chars) }
         self.itos = { i:ch for i,ch in enumerate(chars) }
+
+        with open('cache/stoi.pkl', 'wb') as handle:
+            pickle.dump(self.stoi, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+        with open('cache/itos.pkl', 'wb') as handle:
+            pickle.dump(self.itos, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
         data_size, vocab_size = len(data), len(chars)
         print('Data has %d characters, %d unique.' % (data_size, vocab_size))
