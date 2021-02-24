@@ -46,9 +46,6 @@ with open('cache/itos.pkl', 'rb') as f:
     itos = pickle.load(f)
     print(len(itos))
 
-cur_game = ''
-PAD_CHAR = u'\u25A1'
-
 def get_prediction(game_str):
 
     x = game_str
