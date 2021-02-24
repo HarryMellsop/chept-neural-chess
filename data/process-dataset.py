@@ -34,7 +34,7 @@ def preprocess_kingbase():
         split_line = line.split()
         output_line = " ".join(split_line[6:-1]) + "\n"
         output_line = re.sub(r'[0-9]+\.', '', output_line)
-        if len(output_line) <= max_game_length:
+        if len(output_line) <= max_game_length and '[' not in output_line and ']' not in output_line:
             processed_kingbase_lines.writelines(output_line)
             line_length.append(len(output_line))
 
