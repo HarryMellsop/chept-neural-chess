@@ -12,3 +12,9 @@ Then, you'll need to preprocess the datasets:
     $ python ./data/process-dataset.py
     
 Now you're ready to go!
+
+Training can be achieved through
+
+    $ python run.py
+    
+Inference can be achieved through the interactive notebook `gui_inference.ipynb`.  Note that you will need to `brew install stockfish` in order to run comparative inference of the neural bot against Stockfish, and provide move support where the model otherwise might struggle (we're working on this!)
