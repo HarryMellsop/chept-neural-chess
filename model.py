@@ -5,35 +5,34 @@ import attention
 
 
 class GPTConfig:
-    embd_pdrop = 0.1
+    embed_pdrop = 0.1
     resid_pdrop = 0.1
     attn_pdrop = 0.1
     additive = False
 
-    def __init__(self, vocab_size, block_size, **kwargs):
+    def __init__(self, vocab_size, args_dict):
+
         self.vocab_size = vocab_size
-        self.block_size = block_size
-        for k,v in kwargs.items():
-            setattr(self, k, v)
+        self.__dict__.update(args_dict)
 
 
 class GPT1Config(GPTConfig):
     n_layer = 12
     n_head = 12
-    n_embd = 768
+    n_embed = 768
 
 
 class Block(nn.Module):
     def __init__(self, config):
         super().__init__()
 
-        self.ln1 = nn.LayerNorm(config.n_embd)
-        self.ln2 = nn.LayerNorm(config.n_embd)
+        self.ln1 = nn.LayerNorm(config.n_embed)
+        self.ln2 = nn.LayerNorm(config.n_embed)
         self.attn = attention.CausalSelfAttention(config)
         self.mlp = nn.Sequential(
-            nn.Linear(config.n_embd, 4 * config.n_embd),
+            nn.Linear(config.n_embed, 4 * config.n_embed),
             nn.GELU(),
-            nn.Linear(4 * config.n_embd, config.n_embd),
+            nn.Linear(4 * config.n_embed, config.n_embed),
             nn.Dropout(config.resid_pdrop)
         )
     
@@ -48,14 +47,14 @@ class GPT(nn.Module):
         super().__init__()
 
         # input embedding stem
-        self.tok_emb = nn.Embedding(config.vocab_size, config.n_embd)
-        self.pos_emb = nn.Parameter(torch.zeros(1, config.block_size, config.n_embd))
-        self.drop = nn.Dropout(config.embd_pdrop)
+        self.tok_emb = nn.Embedding(config.vocab_size, config.n_embed)
+        self.pos_emb = nn.Parameter(torch.zeros(1, config.block_size, config.n_embed))
+        self.drop = nn.Dropout(config.embed_pdrop)
 
         # transformer network
         self.blocks = nn.Sequential(*[Block(config) for _ in range(config.n_layer)])
-        self.ln_f = nn.LayerNorm(config.n_embd)
-        self.head = nn.Linear(config.n_embd, config.vocab_size, bias=False)
+        self.ln_f = nn.LayerNorm(config.n_embed)
+        self.head = nn.Linear(config.n_embed, config.vocab_size, bias=False)
         self.block_size = config.block_size
 
         print('Number of parameters: {}'.format(sum(p.numel() for p in self.parameters())))

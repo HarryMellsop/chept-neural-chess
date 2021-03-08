@@ -18,9 +18,8 @@ class TrainerConfig:
     # checkpoint settings
     num_workers = 0
 
-    def __init__(self, **kwargs):
-        for k, v in kwargs.items():
-            setattr(self, k, v)
+    def __init__(self, args_dict):
+        self.__dict__.update(args_dict)
 
 
 class Trainer:
