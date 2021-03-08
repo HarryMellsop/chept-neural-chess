@@ -30,6 +30,8 @@ def main(data_path, config_args, train_args, func):
         model_trainer = trainer.Trainer(gpt_model, pretrain_dataset,
                                         config=train_config)
         model_trainer.train()
+    else:
+        raise NotImplementedError('REEEE')
 
 
 if __name__ == "__main__":
@@ -93,6 +95,8 @@ if __name__ == "__main__":
     if not os.path.isdir(save_dir):
         os.makedirs(save_dir)
 
+    # TODO: Use state dict/params for finetuning
+    # TODO: Ensure no conflict for args and pretrain for all
     if func == 'pretrain' and args.pretrain_params:
         assert questionary.confirm('Pretrain is provided with pretrain params. Continue?').ask(), \
             'Must provide a dataset for training!'
