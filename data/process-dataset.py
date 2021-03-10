@@ -29,7 +29,6 @@ def preprocess_kingbase():
     unprocessed_kingbase_lines = open("./data/datasets/kingbase-ftfy.txt", "r").readlines()
 
     processed_kingbase_lines = open("./data/datasets-cleaned/kingbase_cleaned.txt", "w")
-
     line_length = []
     for line in tqdm.tqdm(unprocessed_kingbase_lines):
         split_line = line.split()
