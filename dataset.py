@@ -36,9 +36,9 @@ class FinetuneDataset(Dataset):
 
         index = random.randint((n_spaces // 2) - 1, n_spaces - 2)
         m_start, m_stop = spaces[index] + 1, spaces[index + 1]
-        x = game[:m_start] + self.MASK_CHAR + game[m_start:m_stop] + self.MASK_CHAR
+        x = game[:m_start] + game[m_start:m_stop]
         x = x + self.PAD_CHAR * (self.block_size - len(x))
-        y = self.PAD_CHAR * m_start + self.MASK_CHAR + game[m_start:m_stop] + self.MASK_CHAR
+        y = self.PAD_CHAR * m_start + game[m_start:m_stop]
         y = y + self.PAD_CHAR * (self.block_size - len(y))
 
         assert len(x) == len(y) == self.block_size
