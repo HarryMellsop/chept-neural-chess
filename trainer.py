@@ -90,7 +90,7 @@ class Trainer:
                     loss = loss.mean()
                 if loss <= (0.8 * min_loss):
                     min_loss = loss
-                    self.save_checkpoint(f'loss_{np.round(loss.item(), 3)}.pt')
+                    self.save_checkpoint('best_loss.pt')
 
                 # backprop and update the parameters
                 model.zero_grad()
