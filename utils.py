@@ -12,8 +12,8 @@ import json
 default_config_args = {
     "block_size": 512,
     "n_layer": 12,
-    "n_head": 16,
-    "n_embed": 256
+    "n_head": 32,
+    "n_embed": 128
 }
 
 default_train_args = {

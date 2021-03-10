@@ -50,7 +50,6 @@ def main(data_path, config_args, train_args, func, pretrain_state=None):
                                     train_dataset,
                                     config=train_config)
     breakpoint()
-
     model_trainer.train()
 
 

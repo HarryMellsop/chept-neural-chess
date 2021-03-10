@@ -8,6 +8,7 @@ import questionary
 from art import tprint
 
 max_game_length = 512
+min_game_length = 20
 
 
 def preprocess_kingbase():
@@ -75,8 +76,10 @@ def preprocess_kaggle():
             else:
                 split_line[index] = token[1:]
         output_line = " ".join(split_line[17:]) + "\n"
+        if output_line == "\n":
+            continue
         output_line = re.sub(r'[0-9]*\.', '', output_line)
-        if len(output_line) <= max_game_length and '[' not in output_line and ']' not in output_line:
+        if len(output_line) <= max_game_length and len(output_line) >= min_game_length and '[' not in output_line and ']' not in output_line:
             processed_kaggle_lines.writelines(output_line)
             line_length.append(len(output_line))
 

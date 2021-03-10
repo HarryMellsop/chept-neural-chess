@@ -24,7 +24,33 @@ class FinetuneDataset(Dataset):
 
         print('Data has %d characters, %d unique.' % (self.data_size, self.vocab_size))
 
-        self.data = list(data.encode('utf-8').decode('ascii', errors='ignore').split('\n'))
+        self.data = list(data.encode('utf-8').decode('ascii', errors='ignore').split('\n'))[:-1]
+
+    def __len__(self):
+        return len(self.data)
+
+    def __getitem__(self, idx):
+
+        game = self.data[idx]
+        spaces = [idx for idx, cur in enumerate(game) if cur == ' ']
+        n_spaces = len(spaces)
+
+        index = random.randint((n_spaces // 2) - 1, n_spaces - 2)
+        m_start, m_stop = spaces[index] + 1, spaces[index + 1]
+        x = game[:m_start] + self.MASK_CHAR + game[m_start:m_stop] + self.MASK_CHAR
+        x = x + self.PAD_CHAR * (self.block_size - len(x))
+        y = self.PAD_CHAR * m_start + self.MASK_CHAR + game[m_start:m_stop] + self.MASK_CHAR
+        y = y + self.PAD_CHAR * (self.block_size - len(y))
+
+        assert len(x) == len(y) == self.block_size
+
+        x = game[:-1]
+        y = game[1:]
+
+        x = torch.tensor([self.stoi[c] for c in x], dtype=torch.long)
+        y = torch.tensor([self.stoi[c] for c in y], dtype=torch.long)
+
+        return x, y
 
 
 class Directory:
