@@ -4,40 +4,54 @@ import model
 import trainer
 import utils
 import questionary
+import torch
 import os
 
 
-def main(data_path, config_args, train_args, func):
+def main(data_path, config_args, train_args, func, pretrain_state=None):
+
+    if pretrain_state:
+        pretrain_vocab = {'itos': pretrain_state['itos'],
+                          'stoi': pretrain_state['stoi']}
+
+        state_dict = pretrain_state['state_dict']
+    else:
+        pretrain_vocab = None
+        state_dict = None
+
+    # get device
+    device = torch.cuda.current_device() if torch.cuda.is_available() else 'cpu'
 
     # load pretrain dataset
     games = open(data_path).read()
 
-    # pretrain
+    # build datasets
     print('\nProcessing dataset...')
-    if func == 'pretrain':
-        pretrain_dataset = dataset.PretrainDataset(games,
-                                                   block_size=config_args['block_size'])
 
-        breakpoint()
+    train_dataset = dataset.Directory(games,
+                                      func,
+                                      config_args,
+                                      pretrain_vocab)()
+    # load model
+    mconf = model.GPTConfig(
+        vocab_size=train_dataset.vocab_size,
+        args_dict=config_args
+    )
 
-        print('reeee')
+    # build model
+    gpt_model = model.GPT(mconf)
+    gpt_model = gpt_model.to(device)
 
-        # load model
-        mconf = model.GPTConfig(
-            vocab_size=pretrain_dataset.vocab_size,
-            args_dict=config_args
-        )
-        gpt_model = model.GPT(mconf)
+    train_config = trainer.TrainerConfig(func=func,
+                                         state_dict=state_dict,
+                                         args_dict=train_args)
 
-        train_config = trainer.TrainerConfig(args_dict=train_args)
+    model_trainer = trainer.Trainer(gpt_model,
+                                    train_dataset,
+                                    config=train_config)
+    breakpoint()
 
-        model_trainer = trainer.Trainer(gpt_model, pretrain_dataset,
-                                        config=train_config)
-        model_trainer.train()
-    else:
-        pretrain_dataset = dataset.PretrainDataset(games,
-                                                   block_size=config_args['block_size'])
-        raise NotImplementedError('REEEE')
+    model_trainer.train()
 
 
 if __name__ == "__main__":
@@ -81,11 +95,13 @@ if __name__ == "__main__":
     save_dir = args.save_dir
     func = args.function
 
-    if not data_path or (func == 'finetune' and not data_path):
-        answer = questionary.confirm('Use default data--kingbase_cleaned.txt?').ask()
+    if not data_path:
+        def_data = 'kingbase_cleaned' if func == 'pretrain' else 'kaggle_cleaned'
+
+        answer = questionary.confirm(f'Use default data--{def_data}.txt?').ask()
         if answer:
-            data_path = 'data/datasets-cleaned/kingbase_cleaned.txt'
-            assert os.path.isfile(data_path), 'DEFAULT DATA PATH NOT FOUND'
+            data_path = f'data/datasets-cleaned/{def_data}.txt'
+            assert os.path.isfile(data_path), 'DATA FILE NOT FOUND'
         else:
             raise FileExistsError('Must provide a dataset for training!')
 
@@ -104,10 +120,19 @@ if __name__ == "__main__":
     # TODO: Use state dict/params for finetuning
     # TODO: Ensure no conflict for args and pretrain for all
     if func == 'pretrain' and args.pretrain_params:
-        assert questionary.confirm('Pretrain is provided with pretrain params. Continue?').ask(), \
-            'Must provide a dataset for training!'
+        assert questionary.confirm('Pretrain is provided with pretrain params. Continue?').ask()
     if func == 'finetune' and not args.pretrain_params:
         raise ValueError('Cannot finteune without a pretrained model!')
+
+    # Get args if provided for finetune
+    if func == 'finetune' and args.pretrain_params:
+        pretrain_dict = torch.load(args.pretrain_params)
+        pretrain_model_config = pretrain_dict['model_config']
+        pretrain_train_config = pretrain_dict['train_config']
+        pretrain_args = pretrain_model_config.__dict__.update(pretrain_train_config.__dict__)
+    else:
+        pretrain_args = None
+        pretrain_dict = None
 
     # Check config args
     meta_args = ['data_path', 'save_dir', 'function', 'pretrain_params']
@@ -117,13 +142,18 @@ if __name__ == "__main__":
     default_train_args = utils.default_train_args
 
     # No provided args
-    if len(set(super_config_train_args.values())) == 1 and not set(super_config_train_args.values()).pop() and not args.args_path:
-        print('NO ARGS PROVIDED. USING DEFAULT ARGS\n')
-        print("Config Args:", default_config_args)
-        print("Train Args:", default_train_args)
+    if func == 'pretrain':
+        if len(set(super_config_train_args.values())) == 1 and not set(super_config_train_args.values()).pop() and not args.args_path:
+            print('NO ARGS PROVIDED. USING DEFAULT ARGS\n')
+            print("Config Args:", default_config_args)
+            print("Train Args:", default_train_args)
+
+    # Mixed args
+    if pretrain_args and (len(set(super_config_train_args.values())) > 1 or args.args_path):
+        print('WARNING: DO NOT CHANGE MODEL CONFIGURATION FOR FINETUNING')
 
     # get separate updated config and train args
-    arguments = utils.TrainArgs(args.args_path, super_config_train_args)
+    arguments = utils.TrainArgs(args.args_path, super_config_train_args, pretrain_args=pretrain_args)
     config_args, train_args = arguments()
 
-    main(data_path, config_args, train_args, func)
+    main(data_path, config_args, train_args, func, pretrain_state=pretrain_dict)

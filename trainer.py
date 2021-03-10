@@ -1,9 +1,6 @@
-import math
 from tqdm import tqdm
-import numpy as np
 import torch
 import torch.optim as optim
-from torch.optim.lr_scheduler import LambdaLR
 from torch.utils.data.dataloader import DataLoader
 
 
@@ -18,7 +15,9 @@ class TrainerConfig:
     # checkpoint settings
     num_workers = 0
 
-    def __init__(self, args_dict):
+    def __init__(self, func, state_dict, args_dict):
+        self.func = func
+        self.state_dict = state_dict
         self.__dict__.update(args_dict)
 
 
@@ -28,6 +27,12 @@ class Trainer:
         self.model = model
         self.train_dataset = train_dataset
         self.config = config
+        self.func = self.config.func
+        self.load_params = self.config.state_dict
+
+        if self.func == 'finetune' and self.load_params:
+            print('\nLoading pretrain params in...\n')
+            self.model.load_state_dict(self.load_params)
 
         # take over whatever gpus are on the system
         self.device = 'cpu'
@@ -37,14 +42,20 @@ class Trainer:
 
     def save_checkpoint(self, path):
         ckpt_model = self.model.module if hasattr(self.model, "module") else self.model
-        torch.save(ckpt_model.state_dict(), path)
+        save_dict = {'state_dict': ckpt_model.state_dict(),
+                     'itos': self.train_dataset.itos,
+                     'stoi': self.train_dataset.stoi,
+                     'model_config': self.model.model_config,
+                     'train_config': self.config}
+
+        torch.save(save_dict, path)
 
     def train(self):
         model, config = self.model, self.config
 
         # create the optimizer
         optimizer = optim.Adam(
-            params=model.parameters(), 
+            params=model.parameters(),
             lr=config.learning_rate,
         )
 

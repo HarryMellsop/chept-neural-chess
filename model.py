@@ -1,4 +1,3 @@
-import math
 import torch
 import torch.nn as nn
 import attention
@@ -35,7 +34,7 @@ class Block(nn.Module):
             nn.Linear(4 * config.n_embed, config.n_embed),
             nn.Dropout(config.resid_pdrop)
         )
-    
+
     def forward(self, x):
         x = x + self.attn(self.ln1(x))
         x = x + self.mlp(self.ln2(x))
@@ -56,6 +55,8 @@ class GPT(nn.Module):
         self.ln_f = nn.LayerNorm(config.n_embed)
         self.head = nn.Linear(config.n_embed, config.vocab_size, bias=False)
         self.block_size = config.block_size
+
+        self.model_config = config
 
         print('Number of parameters: {}'.format(sum(p.numel() for p in self.parameters())))
 

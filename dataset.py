@@ -4,8 +4,48 @@ from torch.utils.data import Dataset
 import pickle
 
 
+class FinetuneDataset(Dataset):
+
+    def __init__(self, data, block_size, pretrain_vocab):
+
+        assert pretrain_vocab, "Must have pretrain vocab for finetuning"
+
+        self.block_size = block_size
+        self.PAD_CHAR = u"\u25A1"
+        self.MASK_CHAR = u"\u2047"
+
+        self.stoi = pretrain_vocab['stoi']
+        self.itos = pretrain_vocab['itos']
+
+        assert len(self.stoi) == len(self.itos)
+
+        self.vocab_size = len(self.stoi)
+        self.data_size = len(data)
+
+        print('Data has %d characters, %d unique.' % (self.data_size, self.vocab_size))
+
+        self.data = list(data.encode('utf-8').decode('ascii', errors='ignore').split('\n'))
+
+
+class Directory:
+
+    def __init__(self, data, func, config_args, pretrain_vocab=None):
+
+        self.data = data
+        self.func = func
+        self.config_args = config_args
+        self.pretrain_vocab = pretrain_vocab
+
+        self.direct = {'pretrain': PretrainDataset,
+                       'finetune': FinetuneDataset}
+
+    def __call__(self):
+
+        return self.direct[self.func](self.data, self.config_args['block_size'], self.pretrain_vocab)
+
+
 class ChessMoveDataset(Dataset):
-    def __init__(self, data, block_size=1024):
+    def __init__(self, data, block_size=1024, pretrain_vocab=None):
 
         self.block_size = block_size
         self.PAD_CHAR = u"\u25A1"
@@ -73,7 +113,7 @@ class FullEmbeddingPretrainDataset(Dataset):
     # requires that we clean numbers out of training data
     # generate every possible PGN move, store that into
 
-    def __init__(self, data, block_size=1024):
+    def __init__(self, data, block_size=1024, pretrain_vocab=None):
 
         self.block_size = block_size
         self.PAD_CHAR = u"\u25A1"
@@ -108,7 +148,8 @@ class FullEmbeddingPretrainDataset(Dataset):
 class PretrainDataset(Dataset):
 
     def __init__(self, data,
-                 block_size=1024):
+                 block_size=1024,
+                 pretrain_vocab=None):
 
         self.block_size = block_size
         self.PAD_CHAR = u"\u25A1"
@@ -126,8 +167,6 @@ class PretrainDataset(Dataset):
 
         self.stoi = {ch: i for i, ch in enumerate(chars)}
         self.itos = {i: ch for i, ch in enumerate(chars)}
-        print(self.stoi)
-        print(len(self.stoi))
 
         with open('cache/stoi.pkl', 'wb') as handle:
             pickle.dump(self.stoi, handle, protocol=pickle.HIGHEST_PROTOCOL)

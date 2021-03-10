@@ -29,9 +29,11 @@ class TrainArgs:
     Class to handle creation of arguments for training. Handles pretraining and finetunring scenarios.
     """
 
-    def __init__(self, args_path, provided_args, default_config=default_config_args, default_train=default_train_args):
+    def __init__(self, args_path, provided_args, pretrain_args=None, default_config=default_config_args, default_train=default_train_args):
 
         self.update_defaults(default_config, default_train)
+        if pretrain_args:
+            self.__dict__.update(pretrain_args)
         self.file_update(args_path)
         self.provided_update(provided_args)
 
