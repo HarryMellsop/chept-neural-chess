@@ -1,7 +1,6 @@
 import random
 import torch
 from torch.utils.data import Dataset
-import pickle
 
 
 class FinetuneDataset(Dataset):
@@ -44,8 +43,8 @@ class FinetuneDataset(Dataset):
 
         assert len(x) == len(y) == self.block_size
 
-        x = game[:-1]
-        y = game[1:]
+        x = x[:-1]
+        y = y[1:]
 
         x = torch.tensor([self.stoi[c] for c in x], dtype=torch.long)
         y = torch.tensor([self.stoi[c] for c in y], dtype=torch.long)
@@ -193,12 +192,6 @@ class PretrainDataset(Dataset):
 
         self.stoi = {ch: i for i, ch in enumerate(chars)}
         self.itos = {i: ch for i, ch in enumerate(chars)}
-
-        with open('cache/stoi.pkl', 'wb') as handle:
-            pickle.dump(self.stoi, handle, protocol=pickle.HIGHEST_PROTOCOL)
-
-        with open('cache/itos.pkl', 'wb') as handle:
-            pickle.dump(self.itos, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
         data_size, vocab_size = len(data), len(chars)
         print('Data has %d characters, %d unique.' % (data_size, vocab_size))

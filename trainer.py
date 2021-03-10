@@ -1,4 +1,6 @@
 from tqdm import tqdm
+import numpy as np
+import os
 import torch
 import torch.optim as optim
 from torch.utils.data.dataloader import DataLoader
@@ -23,12 +25,14 @@ class TrainerConfig:
 
 class Trainer:
 
-    def __init__(self, model, train_dataset, config):
+    def __init__(self, model, train_dataset, save_dir, config):
         self.model = model
         self.train_dataset = train_dataset
         self.config = config
         self.func = self.config.func
         self.load_params = self.config.state_dict
+
+        self.save_dir = save_dir
 
         if self.func == 'finetune' and self.load_params:
             print('\nLoading pretrain params in...\n')
@@ -41,6 +45,7 @@ class Trainer:
             self.model = torch.nn.DataParallel(self.model).to(self.device)
 
     def save_checkpoint(self, path):
+        save_path = os.path.join(self.save_dir, path)
         ckpt_model = self.model.module if hasattr(self.model, "module") else self.model
         save_dict = {'state_dict': ckpt_model.state_dict(),
                      'itos': self.train_dataset.itos,
@@ -48,7 +53,7 @@ class Trainer:
                      'model_config': self.model.model_config,
                      'train_config': self.config}
 
-        torch.save(save_dict, path)
+        torch.save(save_dict, save_path)
 
     def train(self):
         model, config = self.model, self.config
@@ -68,10 +73,11 @@ class Trainer:
                 num_workers=config.num_workers
             )
 
+            min_loss = float('inf')
             pbar = tqdm(enumerate(loader), total=len(loader))
             for it, (x, y) in pbar:
                 if it % 1000 == 0:
-                    self.save_checkpoint('ckpt/model.iter.params')
+                    self.save_checkpoint(f'iter_{it}.pt')
 
                 # place data on the correct device
                 x = x.to(self.device)
@@ -81,6 +87,9 @@ class Trainer:
                 with torch.set_grad_enabled(True):
                     logits, loss = model(x, y)
                     loss = loss.mean()
+                if loss <= (0.8 * min_loss):
+                    min_loss = loss
+                    self.save_checkpoint(f'loss_{np.round(loss.item(), 3)}.pt')
 
                 # backprop and update the parameters
                 model.zero_grad()
@@ -94,4 +103,4 @@ class Trainer:
         self.tokens = 0
         for epoch in range(config.max_epochs):
             run_epoch('train')
-            self.save_checkpoint('ckpt/model.final.params')
+            self.save_checkpoint(f'epoch_{epoch}.pt')

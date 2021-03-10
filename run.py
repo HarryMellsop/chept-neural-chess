@@ -8,7 +8,7 @@ import torch
 import os
 
 
-def main(data_path, config_args, train_args, func, pretrain_state=None):
+def main(data_path, config_args, train_args, func, save_dir, pretrain_state=None):
 
     if pretrain_state:
         pretrain_vocab = {'itos': pretrain_state['itos'],
@@ -48,8 +48,8 @@ def main(data_path, config_args, train_args, func, pretrain_state=None):
 
     model_trainer = trainer.Trainer(gpt_model,
                                     train_dataset,
+                                    save_dir,
                                     config=train_config)
-    breakpoint()
     model_trainer.train()
 
 
@@ -116,8 +116,6 @@ if __name__ == "__main__":
     if not os.path.isdir(save_dir):
         os.makedirs(save_dir)
 
-    # TODO: Use state dict/params for finetuning
-    # TODO: Ensure no conflict for args and pretrain for all
     if func == 'pretrain' and args.pretrain_params:
         assert questionary.confirm('Pretrain is provided with pretrain params. Continue?').ask()
     if func == 'finetune' and not args.pretrain_params:
@@ -155,4 +153,4 @@ if __name__ == "__main__":
     arguments = utils.TrainArgs(args.args_path, super_config_train_args, pretrain_args=pretrain_args)
     config_args, train_args = arguments()
 
-    main(data_path, config_args, train_args, func, pretrain_state=pretrain_dict)
+    main(data_path, config_args, train_args, func, save_dir, pretrain_state=pretrain_dict)
