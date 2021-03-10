@@ -4,8 +4,11 @@ import numpy as np
 import os
 import random
 import re
+import questionary
+from art import tprint
 
 max_game_length = 512
+
 
 def preprocess_kingbase():
     print("Now processing kingbase-ftfy.txt")
@@ -16,15 +19,12 @@ def preprocess_kingbase():
 
     # check if this file has already been preprocessed
     if os.path.exists("./data/datasets-cleaned/kingbase_cleaned.txt"):
-        response = ""
-        while response.lower() != "y" and response.lower() != "n":
-            response = input("It appears that the kingbase file has already been preprocessed; reprocess?  (Y/N):  ")
-
-            if response.lower() == "n":
-                return
+        response = questionary.confirm("It appears that the kingbase file has already been preprocessed; reprocess?").ask()
+        if not response:
+            return
 
         os.remove("./data/datasets-cleaned/kingbase_cleaned.txt")
-    
+
     unprocessed_kingbase_lines = open("./data/datasets/kingbase-ftfy.txt", "r").readlines()
 
     processed_kingbase_lines = open("./data/datasets-cleaned/kingbase_cleaned.txt", "w")
@@ -47,6 +47,7 @@ def preprocess_kingbase():
 
     print("Total games in the post-processed file: %d", len(line_length))
 
+
 def preprocess_kaggle():
     print("Now preprocessing all_with_filtered_anotations_since1998.txt")
 
@@ -56,13 +57,9 @@ def preprocess_kaggle():
 
     # check if this file has already been preprocessed
     if os.path.exists("./data/datasets-cleaned/kaggle_cleaned.txt"):
-        response = ""
-        while response.lower() != "y" and response.lower() != "n":
-            response = input("It appears that the kaggle file has already been preprocessed; reprocess?  (Y/N):  ")
-
-            if response.lower() == "n":
-                return
-
+        response = questionary.confirm("It appears that the kaggle file has already been preprocessed; reprocess?").ask()
+        if not response:
+            return
         os.remove("./data/datasets-cleaned/kaggle_cleaned.txt")
 
     unprocessed_kaggle_lines = open("./data/datasets/all_with_filtered_anotations_since1998.txt", "r").readlines()[5:]
@@ -78,8 +75,8 @@ def preprocess_kaggle():
             else:
                 split_line[index] = token[1:]
         output_line = " ".join(split_line[17:]) + "\n"
-        
-        if len(output_line) <= max_game_length:
+        output_line = re.sub(r'[0-9]*\.', '', output_line)
+        if len(output_line) <= max_game_length and '[' not in output_line and ']' not in output_line:
             processed_kaggle_lines.writelines(output_line)
             line_length.append(len(output_line))
 
@@ -90,10 +87,12 @@ def preprocess_kaggle():
     plt.xlabel('Sequence Length')
     plt.show()
 
+
 def main():
-    print("Welcome to ChePT Data Preprocessor")
+    tprint("ChePT   Preprocessor")
     preprocess_kingbase()
     preprocess_kaggle()
+
 
 if __name__ == '__main__':
     main()

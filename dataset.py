@@ -126,6 +126,8 @@ class PretrainDataset(Dataset):
 
         self.stoi = {ch: i for i, ch in enumerate(chars)}
         self.itos = {i: ch for i, ch in enumerate(chars)}
+        print(self.stoi)
+        print(len(self.stoi))
 
         with open('cache/stoi.pkl', 'wb') as handle:
             pickle.dump(self.stoi, handle, protocol=pickle.HIGHEST_PROTOCOL)

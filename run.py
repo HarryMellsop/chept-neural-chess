@@ -18,6 +18,10 @@ def main(data_path, config_args, train_args, func):
         pretrain_dataset = dataset.PretrainDataset(games,
                                                    block_size=config_args['block_size'])
 
+        breakpoint()
+
+        print('reeee')
+
         # load model
         mconf = model.GPTConfig(
             vocab_size=pretrain_dataset.vocab_size,
@@ -31,6 +35,8 @@ def main(data_path, config_args, train_args, func):
                                         config=train_config)
         model_trainer.train()
     else:
+        pretrain_dataset = dataset.PretrainDataset(games,
+                                                   block_size=config_args['block_size'])
         raise NotImplementedError('REEEE')
 
 
