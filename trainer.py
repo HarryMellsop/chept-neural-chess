@@ -27,6 +27,7 @@ class Trainer:
 
     def __init__(self, model, train_dataset, save_dir, config):
         self.model = model
+        self.model_config = model.model_config
         self.train_dataset = train_dataset
         self.config = config
         self.func = self.config.func
@@ -50,7 +51,7 @@ class Trainer:
         save_dict = {'state_dict': ckpt_model.state_dict(),
                      'itos': self.train_dataset.itos,
                      'stoi': self.train_dataset.stoi,
-                     'model_config': self.model.model_config,
+                     'model_config': self.model_config,
                      'train_config': self.config}
 
         torch.save(save_dict, save_path)
