@@ -99,7 +99,7 @@ class Trainer:
                 optimizer.step()
 
                 # report progress
-                pbar.set_description(f"epoch {epoch + 1} iter {it}: train loss {loss.item():.3f}")
+                pbar.set_description(f"epoch {epoch + 1} iter {it}: train loss {loss.item():.5f}")
 
         self.tokens = 0
         for epoch in range(config.max_epochs):
