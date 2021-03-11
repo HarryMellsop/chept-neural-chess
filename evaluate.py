@@ -7,6 +7,7 @@ import torch
 from tqdm import tqdm
 import model
 import utils
+import pickle
 import chess.engine
 
 MASK_CHAR = u"\u2047"
@@ -35,7 +36,7 @@ def bot_vs_stockfish(game_str, gpt_model, stoi, itos, args):
     bot_move_count = 0
 
     while True:
-        comp_move = engine.play(board, chess.engine.Limit(time=0.05))
+        comp_move = engine.play(board, chess.engine.Limit(time=0.0005))
         game_str += board.san(comp_move.move) + ' '
         board.push(comp_move.move)
 
@@ -109,10 +110,14 @@ def display_results(num_illegal_moves,
                     total_black_moves,
                     final_illegal_moves,
                     winners,
+                    diff_arr,
                     num):
 
     z = np.array(first_illegal_move)
     curated_first_illegal = z[z != -1]
+
+    with open('diffs.pkl', 'wb') as f:
+        pickle.dump(diff_arr, f)
 
     print(f'Analyzed {num + 1} games...')
     print('On average, ChePT made:')
@@ -137,6 +142,7 @@ def main(gpt_model, stoi, itos, args):
     first_illegal_move = []
     total_black_moves = []
     final_illegal_moves = []
+    diff_arr = []
     winners = []
 
     print(f'\nEvaluating {args.n_games} games')
@@ -147,7 +153,7 @@ def main(gpt_model, stoi, itos, args):
                                                                                                  itos,
                                                                                                  args)
         winners.append(winner)
-        print(diffs)
+        diff_arr.append(diffs)
         final_illegal_moves.append(final_illegal)
         black_moves = int(len(game_str.split()) / 2)
         total_black_moves.append(black_moves)
@@ -159,6 +165,7 @@ def main(gpt_model, stoi, itos, args):
                     total_black_moves,
                     final_illegal_moves,
                     winners,
+                    diff_arr,
                     i)
 
 
