@@ -62,8 +62,7 @@ if __name__ == "__main__":
                         help='Pretrain or finetune model.',
                         choices=["pretrain", "finetune"])
     parser.add_argument('--version', type=int, default=None,
-                        help='Finetune version.',
-                        choices=["pretrain", "finetune"])
+                        help='Finetune version.')
     parser.add_argument('--data_path', type=str,
                         help='Dataset to use.')
     parser.add_argument('--save_dir', type=str,
