@@ -37,7 +37,6 @@ def bot_vs_stockfish(game_str, gpt_model, stoi, itos, args):
     bot_move_count = 0
 
     while True:
-        print(game_str)
         comp_move = engine.play(board, chess.engine.Limit(time=0.0005))
         game_str += board.san(comp_move.move) + ' '
         board.push(comp_move.move)

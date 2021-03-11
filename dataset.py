@@ -273,8 +273,8 @@ class PretrainDataset(Dataset):
 
         return x, y
 
-    finetune_versions = {0: Finetune_Full,
-                         1: Finetune_Middle}
+finetune_versions = {0: Finetune_Full,
+                        1: Finetune_Middle}
 
 
 if __name__ == '__main__':
