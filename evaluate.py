@@ -40,6 +40,10 @@ def bot_vs_stockfish(game_str, gpt_model, stoi, itos, args):
         game_str += board.san(comp_move.move) + ' '
         board.push(comp_move.move)
 
+        if board.is_stalemate() or board.is_insufficient_material():
+            winner = "DRAW"
+            break
+
         if board.is_checkmate():
             winner = "STOCKFISH"
             break
@@ -98,6 +102,11 @@ def bot_vs_stockfish(game_str, gpt_model, stoi, itos, args):
                 diffs.append(bot_int - comp_int)
 
         game_str = game_str + bot_move + ' '
+
+        if board.is_stalemate() or board.is_insufficient_material():
+            winner = "DRAW"
+            break
+
         if board.is_checkmate():
             winner = "BOT"
             break
@@ -131,8 +140,10 @@ def display_results(num_illegal_moves,
     print(f'ChePT makes an illegal move {percent}% of the time')
 
     n_bot_wins = np.sum(np.array(winners) == 'BOT')
+    n_draws = np.sum(np.array(winners) == 'DRAW')
 
     print(f'\nChePT managed to win {n_bot_wins} games.')
+    print(f'\nChePT managed to draw {n_draws} games.')
     engine.quit()
 
 
