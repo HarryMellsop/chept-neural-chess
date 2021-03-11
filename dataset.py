@@ -37,11 +37,13 @@ class FinetuneDataset(Dataset):
         # index = random.randint((n_spaces // 2) - 1, n_spaces - 2)
         # doesn't know what to do early game now cuz it was never "prompted"
         # finetuning #2 could be to focus only on ^^ >= 50% of game
+
+        # different way to calc loss? 99% of it is just padding 512 chars
         index = random.randint(0, n_spaces - 2)
         m_start, m_stop = spaces[index] + 1, spaces[index + 1]
-        x = game[:m_start] + self.MASK_CHAR + game[m_start:m_stop] + self.MASK_CHAR
+        x = game[:m_start] + self.MASK_CHAR + game[m_start:m_stop + 1] + self.MASK_CHAR
         x = x + self.PAD_CHAR * (self.block_size - len(x))
-        y = self.PAD_CHAR * m_start + self.MASK_CHAR + game[m_start:m_stop] + self.MASK_CHAR
+        y = self.PAD_CHAR * m_start + self.MASK_CHAR + game[m_start:m_stop + 1] + self.MASK_CHAR
         y = y + self.PAD_CHAR * (self.block_size - len(y))
 
         assert len(x) == len(y) == self.block_size
