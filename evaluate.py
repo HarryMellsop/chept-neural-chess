@@ -32,10 +32,12 @@ def bot_vs_stockfish(game_str, gpt_model, stoi, itos, args):
     first_bad_move = -1
     board = chess.Board()
     illegal_moves = []
-    diffs = []
+    bot_scores = []
+    comp_scores = []
     bot_move_count = 0
 
     while True:
+        print(game_str)
         comp_move = engine.play(board, chess.engine.Limit(time=0.0005))
         game_str += board.san(comp_move.move) + ' '
         board.push(comp_move.move)
@@ -99,7 +101,8 @@ def bot_vs_stockfish(game_str, gpt_model, stoi, itos, args):
             if not bot_score.is_mate() and not comp_score.is_mate():
                 bot_int = bot_score.black().score()
                 comp_int = comp_score.black().score()
-                diffs.append(bot_int - comp_int)
+                bot_scores.append(bot_int)
+                comp_scores.append(comp_int)
 
         game_str = game_str + bot_move + ' '
 
@@ -111,7 +114,7 @@ def bot_vs_stockfish(game_str, gpt_model, stoi, itos, args):
             winner = "BOT"
             break
 
-    return (game_str, illegal_moves, first_bad_move, final_illegal, diffs, winner)
+    return (game_str, illegal_moves, first_bad_move, final_illegal, bot_scores, comp_scores, winner)
 
 
 def display_results(num_illegal_moves,
@@ -119,14 +122,18 @@ def display_results(num_illegal_moves,
                     total_black_moves,
                     final_illegal_moves,
                     winners,
-                    diff_arr,
+                    bot_arr,
+                    comp_arr,
                     num):
 
     z = np.array(first_illegal_move)
     curated_first_illegal = z[z != -1]
 
-    with open('diffs.pkl', 'wb') as f:
-        pickle.dump(diff_arr, f)
+    with open('bot_scores.pkl', 'wb') as f:
+        pickle.dump(bot_arr, f)
+    
+    with open('comp_scores.pkl', 'wb') as f:
+        pickle.dump(comp_arr, f)
 
     print(f'Analyzed {num + 1} games...')
     print('On average, ChePT made:')
@@ -153,18 +160,20 @@ def main(gpt_model, stoi, itos, args):
     first_illegal_move = []
     total_black_moves = []
     final_illegal_moves = []
-    diff_arr = []
+    bot_arr = []
+    comp_arr = []
     winners = []
 
     print(f'\nEvaluating {args.n_games} games')
     for i in tqdm(range(args.n_games)):
-        game_str, illegal_moves, first_bad_move, final_illegal, diffs, winner = bot_vs_stockfish('',
+        game_str, illegal_moves, first_bad_move, final_illegal, bot_scores, comp_scores, winner = bot_vs_stockfish('',
                                                                                                  gpt_model,
                                                                                                  stoi,
                                                                                                  itos,
                                                                                                  args)
         winners.append(winner)
-        diff_arr.append(diffs)
+        bot_arr.append(bot_scores)
+        comp_arr.append(comp_scores)
         final_illegal_moves.append(final_illegal)
         black_moves = int(len(game_str.split()) / 2)
         total_black_moves.append(black_moves)
@@ -176,7 +185,8 @@ def main(gpt_model, stoi, itos, args):
                     total_black_moves,
                     final_illegal_moves,
                     winners,
-                    diff_arr,
+                    bot_arr,
+                    comp_arr,
                     i)
 
 
