@@ -7,8 +7,10 @@ import questionary
 import torch
 import os
 
+from dataset import finetune_versions
 
-def main(data_path, config_args, train_args, func, save_dir, pretrain_state=None):
+
+def main(data_path, version, config_args, train_args, func, save_dir, pretrain_state=None):
 
     if pretrain_state:
         pretrain_vocab = {'itos': pretrain_state['itos'],
@@ -29,7 +31,7 @@ def main(data_path, config_args, train_args, func, save_dir, pretrain_state=None
     print('\nProcessing dataset...')
 
     train_dataset = dataset.Directory(games,
-                                      func,
+                                      version,
                                       config_args,
                                       pretrain_vocab)()
     # load model
@@ -58,6 +60,9 @@ if __name__ == "__main__":
 
     parser.add_argument('function', type=str,
                         help='Pretrain or finetune model.',
+                        choices=["pretrain", "finetune"])
+    parser.add_argument('--version', type=int, default=None,
+                        help='Finetune version.',
                         choices=["pretrain", "finetune"])
     parser.add_argument('--data_path', type=str,
                         help='Dataset to use.')
@@ -93,6 +98,19 @@ if __name__ == "__main__":
     data_path = args.data_path
     save_dir = args.save_dir
     func = args.function
+    version = args.version
+
+    possible_versions = list(finetune_versions.keys())
+
+    if version and func == 'pretrain':
+        raise ValueError('Pretrain does not use versions.')
+    elif version and func == 'finetune':
+        assert version in possible_versions, 'Specified version does not exist!'
+
+    elif not version and func == 'finetune':
+        print('WARNING: FINETUNING WITHOUT A VERSION')
+        print('SETTING TO DEFAULT FINETUNE VERSION 0')
+        version = 0
 
     if not data_path:
         def_data = 'kingbase_cleaned' if func == 'pretrain' else 'kaggle_cleaned'
@@ -153,4 +171,4 @@ if __name__ == "__main__":
     arguments = utils.TrainArgs(args.args_path, super_config_train_args, pretrain_args=pretrain_args)
     config_args, train_args = arguments()
 
-    main(data_path, config_args, train_args, func, save_dir, pretrain_state=pretrain_dict)
+    main(data_path, version, config_args, train_args, func, save_dir, pretrain_state=pretrain_dict)

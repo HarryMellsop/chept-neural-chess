@@ -3,7 +3,7 @@ import torch
 from torch.utils.data import Dataset
 
 
-class FinetuneDataset(Dataset):
+class Finetune_Full(Dataset):
 
     def __init__(self, data, block_size, pretrain_vocab):
 
@@ -57,21 +57,73 @@ class FinetuneDataset(Dataset):
         return x, y
 
 
+class Finetune_Middle(Dataset):
+
+    def __init__(self, data, block_size, pretrain_vocab):
+
+        assert pretrain_vocab, "Must have pretrain vocab for finetuning"
+
+        self.block_size = block_size
+        self.PAD_CHAR = u"\u25A1"
+        self.MASK_CHAR = u"\u2047"
+
+        self.stoi = pretrain_vocab['stoi']
+        self.itos = pretrain_vocab['itos']
+
+        assert len(self.stoi) == len(self.itos)
+
+        self.vocab_size = len(self.stoi)
+        self.data_size = len(data)
+
+        print('Data has %d characters, %d unique.' % (self.data_size, self.vocab_size))
+
+        self.data = list(data.encode('utf-8').decode('ascii', errors='ignore').split('\n'))[:-1]
+        self.starting = int(0.2 * len(self.data))
+        self.data = self.data[self.starting:]
+
+    def __len__(self):
+        return len(self.data)
+
+    def __getitem__(self, idx):
+
+        game = self.data[idx]
+        spaces = [idx for idx, cur in enumerate(game) if cur == ' ']
+        n_spaces = len(spaces)
+
+        index = random.randint((n_spaces // 2) - 1, n_spaces - 2)
+        m_start, m_stop = spaces[index] + 1, spaces[index + 1]
+        x = game[:m_start] + self.MASK_CHAR + game[m_start:m_stop + 1] + self.MASK_CHAR
+        x = x + self.PAD_CHAR * (self.block_size - len(x))
+        y = self.PAD_CHAR * m_start + self.MASK_CHAR + game[m_start:m_stop + 1] + self.MASK_CHAR
+        y = y + self.PAD_CHAR * (self.block_size - len(y))
+
+        assert len(x) == len(y) == self.block_size
+
+        x = x[:-1]
+        y = y[1:]
+
+        x = torch.tensor([self.stoi[c] for c in x], dtype=torch.long)
+        y = torch.tensor([self.stoi[c] for c in y], dtype=torch.long)
+
+        return x, y
+
+
 class Directory:
 
-    def __init__(self, data, func, config_args, pretrain_vocab=None):
+    def __init__(self, data, version, config_args, pretrain_vocab=None):
 
         self.data = data
-        self.func = func
+        self.version = version
         self.config_args = config_args
         self.pretrain_vocab = pretrain_vocab
 
-        self.direct = {'pretrain': PretrainDataset,
-                       'finetune': FinetuneDataset}
+        self.direct = {None: PretrainDataset,
+                       0: Finetune_Full,
+                       1: Finetune_Middle}
 
     def __call__(self):
 
-        return self.direct[self.func](self.data, self.config_args['block_size'], self.pretrain_vocab)
+        return self.direct[self.version](self.data, self.config_args['block_size'], self.pretrain_vocab)
 
 
 class ChessMoveDataset(Dataset):
@@ -220,6 +272,9 @@ class PretrainDataset(Dataset):
         y = torch.tensor([self.stoi[c] for c in y], dtype=torch.long)
 
         return x, y
+
+    finetune_versions = {0: Finetune_Full,
+                         1: Finetune_Middle}
 
 
 if __name__ == '__main__':
