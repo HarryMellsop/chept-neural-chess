@@ -143,7 +143,7 @@ def display_results(num_illegal_moves,
     n_draws = np.sum(np.array(winners) == 'DRAW')
 
     print(f'\nChePT managed to win {n_bot_wins} games.')
-    print(f'\nChePT managed to draw {n_draws} games.')
+    print(f'ChePT managed to draw {n_draws} games.')
     engine.quit()
 
 
