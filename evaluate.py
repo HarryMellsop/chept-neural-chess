@@ -127,6 +127,7 @@ def display_results(num_illegal_moves,
 
     z = np.array(first_illegal_move)
     curated_first_illegal = z[z != -1]
+    n_without_illegal = z.shape[0] - curated_first_illegal.shape[0]
 
     with open('bot_scores.pkl', 'wb') as f:
         pickle.dump(bot_arr, f)
@@ -139,6 +140,7 @@ def display_results(num_illegal_moves,
     print(f'\t\t\t{int(np.mean(total_black_moves))} moves per game.')
     print(f'\t\t\tFirst illegal move on move {int(np.mean(curated_first_illegal))}.')
     print(f'\t\t\t{int(np.mean(num_illegal_moves))} illegal moves per game.')
+    print(f'\t\t\t{n_without_illegal} games with no illegal moves.')
     print(f'\t\t\t{int(np.mean(final_illegal_moves))} final illegal moves per game.')
 
     print('')

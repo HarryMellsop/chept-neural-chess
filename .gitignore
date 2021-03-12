@@ -4,3 +4,6 @@ data/datasets/*
 data/datasets-cleaned/*
 __pycache__
 ckpt/*
+ckpts/finetune_default/
+ckpts/finetune_mid/
+ckpts/finetune_late/
