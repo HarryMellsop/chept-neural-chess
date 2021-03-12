@@ -131,23 +131,53 @@ def save_results(results, args):
 
 
 def eval_moves(bot_arr, comp_arr):
-    # TODO: eval by thirds (early, middle, end)
 
     assert len(bot_arr) == len(comp_arr)
 
-    normalized = []
+    normalized_full = []
+    normalized_early = []
+    normalized_mid = []
+    normalized_late = []
 
     for i in range(len(bot_arr)):
         bot_scores = np.array(bot_arr[i])
         comp_scores = np.array(comp_arr[i])
 
-        diff_arr = bot_scores - comp_scores
-        norm_factor = np.mean(np.abs(comp_scores))
-        normalized.append(diff_arr / norm_factor)
+        p1 = len(bot_scores) // 3
+        p2 = 2 * p1
+
+        bot_early, comp_early = bot_scores[:p1], comp_scores[:p1]
+        bot_mid, comp_mid = bot_scores[p1:p2], comp_scores[p1:p2]
+        bot_late, comp_late = bot_scores[p2:], comp_scores[p2:]
+
+        assert (len(bot_early) + len(bot_mid) + len(bot_late)) == len(bot_scores)
+
+        full_diff = bot_scores - comp_scores
+        early_diff = bot_early - comp_early
+        mid_diff = bot_mid - comp_mid
+        late_diff = bot_late - comp_late
+
+        norm_full = np.mean(np.abs(comp_scores))
+        norm_early = np.mean(np.abs(comp_early))
+        norm_mid = np.mean(np.abs(comp_mid))
+        norm_late = np.mean(np.abs(comp_late))
+
+        normalized_full.append(full_diff / norm_full)
+        normalized_early.append(early_diff / norm_early)
+        normalized_mid.append(mid_diff / norm_mid)
+        normalized_late.append(late_diff / norm_late)
     
-    avg_scores = [np.mean(x) for x in normalized]
-    total_avg = np.mean(avg_scores)
-    return total_avg
+    full_scores = [np.mean(x) for x in normalized_full]
+    full_avg = np.mean(full_scores)
+    early_avg = np.mean([np.mean(x) for x in normalized_early])
+    mid_avg = np.mean([np.mean(x) for x in normalized_mid])
+    late_avg = np.mean([np.mean(x) for x in normalized_late])
+    
+    return {'full_avg': full_avg,
+            'early_avg': early_avg,
+            'mid_avg': mid_avg,
+            'late_avg': late_avg}
+
 
 def display_results(num_illegal_moves,
                     first_illegal_move,
@@ -201,7 +231,10 @@ def display_results(num_illegal_moves,
                'Percent final illegal moves': float(final_percent),
                'Wins': int(n_bot_wins),
                'Draws': int(n_draws),
-               'Average move evaluation': float(move_evals)}
+               'Average move evaluation': float(move_evals['full_avg']),
+               'Average early game move evaluation': float(move_evals['early_avg']),
+               'Average mid game move evaluation': float(move_evals['mid_avg']),
+               'Average late game move evaluation': float(move_evals['late_avg'])}
 
     save_results(results, args)
 
