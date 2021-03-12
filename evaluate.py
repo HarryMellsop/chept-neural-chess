@@ -2,6 +2,7 @@ import chess
 import argparse
 import questionary
 import os
+import json
 import numpy as np
 import torch
 from tqdm import tqdm
@@ -116,6 +117,38 @@ def bot_vs_stockfish(game_str, gpt_model, stoi, itos, args):
     return (game_str, illegal_moves, first_bad_move, final_illegal, bot_scores, comp_scores, winner)
 
 
+def save_results(results, args):
+
+    save_dir = 'eval_results'
+    if not os.path.exists(save_dir):
+        os.makedirs(save_dir)
+    
+    save_file = args.save_name + '.json'
+    save_path = os.path.join(save_dir, save_file)
+
+    with open(save_path, 'w', encoding='utf-8') as f:
+        json.dump(results, f, ensure_ascii=False, indent=4)
+
+
+def eval_moves(bot_arr, comp_arr):
+    # TODO: eval by thirds (early, middle, end)
+
+    assert len(bot_arr) == len(comp_arr)
+
+    normalized = []
+
+    for i in range(len(bot_arr)):
+        bot_scores = np.array(bot_arr[i])
+        comp_scores = np.array(comp_arr[i])
+
+        diff_arr = bot_scores - comp_scores
+        norm_factor = np.mean(np.abs(comp_scores))
+        normalized.append(diff_arr / norm_factor)
+    
+    avg_scores = [np.mean(x) for x in normalized]
+    total_avg = np.mean(avg_scores)
+    return total_avg
+
 def display_results(num_illegal_moves,
                     first_illegal_move,
                     total_black_moves,
@@ -123,11 +156,14 @@ def display_results(num_illegal_moves,
                     winners,
                     bot_arr,
                     comp_arr,
-                    num):
+                    num,
+                    args):
 
     z = np.array(first_illegal_move)
     curated_first_illegal = z[z != -1]
     n_without_illegal = z.shape[0] - curated_first_illegal.shape[0]
+
+    move_evals = eval_moves(bot_arr, comp_arr)
 
     with open('bot_scores.pkl', 'wb') as f:
         pickle.dump(bot_arr, f)
@@ -139,19 +175,36 @@ def display_results(num_illegal_moves,
     print('On average, ChePT made:')
     print(f'\t\t\t{int(np.mean(total_black_moves))} moves per game.')
     print(f'\t\t\tFirst illegal move on move {int(np.mean(curated_first_illegal))}.')
-    print(f'\t\t\t{int(np.mean(num_illegal_moves))} illegal moves per game.')
-    print(f'\t\t\t{n_without_illegal} games with no illegal moves.')
+    print(f'\t\t\t{int(np.mean(num_illegal_moves))} attempted illegal moves per game.')
     print(f'\t\t\t{int(np.mean(final_illegal_moves))} final illegal moves per game.')
 
     print('')
-    percent = np.round(np.mean(np.array(num_illegal_moves) / np.array(total_black_moves)) * 100, 3)
-    print(f'ChePT makes an illegal move {percent}% of the time')
+    print(f'ChePT had {n_without_illegal} games with no illegal moves.')
+    attempt_percent = np.round(np.mean(np.array(num_illegal_moves) / np.array(total_black_moves)) * 100, 3)
+    final_percent = np.round(np.mean(np.array(final_illegal_moves) / np.array(total_black_moves)) * 100, 3)
+    print(f'ChePT attempts to make an illegal move {attempt_percent}% of the time')
+    print(f'ChePT finally makes an illegal move {final_percent}% of the time')
 
     n_bot_wins = np.sum(np.array(winners) == 'BOT')
     n_draws = np.sum(np.array(winners) == 'DRAW')
 
     print(f'\nChePT managed to win {n_bot_wins} games.')
     print(f'ChePT managed to draw {n_draws} games.')
+
+    results = {'Number of games': num + 1,
+               'Number of moves': int(np.mean(total_black_moves)),
+               'First illegal move': int(np.mean(curated_first_illegal)),
+               'Attempted illegal moves': int(np.mean(num_illegal_moves)),
+               'Games without illegal moves': n_without_illegal,
+               'Final illegal moves': int(np.mean(final_illegal_moves)),
+               'Percent attempted illegal moves': float(attempt_percent),
+               'Percent final illegal moves': float(final_percent),
+               'Wins': int(n_bot_wins),
+               'Draws': int(n_draws),
+               'Average move evaluation': float(move_evals)}
+
+    save_results(results, args)
+
     engine.quit()
 
 
@@ -181,6 +234,7 @@ def main(gpt_model, stoi, itos, args):
         first_illegal_move.append(first_bad_move)
         num_illegal_moves.append(sum(illegal_moves))
 
+    print('\nCalculating eval metrics\n')
     display_results(num_illegal_moves,
                     first_illegal_move,
                     total_black_moves,
@@ -188,7 +242,8 @@ def main(gpt_model, stoi, itos, args):
                     winners,
                     bot_arr,
                     comp_arr,
-                    i)
+                    i,
+                    args)
 
 
 def get_recent_ckpt(ckpt_dir):
@@ -235,6 +290,7 @@ if __name__ == '__main__':
         print(f"Using {ckpt_path}")
     else:
         ckpt_path = args.ckpt
+    args.save_name = ckpt_path.split('/')[1]
     # get ckpt
     ckpt = torch.load(ckpt_path,
                       map_location=torch.device(device))

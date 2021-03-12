@@ -7,3 +7,6 @@ ckpt/*
 ckpts/finetune_default/
 ckpts/finetune_mid/
 ckpts/finetune_late/
+eval_results/
+bot_scores.pkl
+comp_scores.pkl
