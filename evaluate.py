@@ -16,15 +16,16 @@ engine = chess.engine.SimpleEngine.popen_uci("/usr/local/bin/stockfish")
 device = torch.cuda.current_device() if torch.cuda.is_available() else 'cpu'
 
 
-def get_prediction(game_str, gpt_model, stoi, itos, sample=False):
-    x = game_str + MASK_CHAR
+def get_prediction(game_str, gpt_model, stoi, itos, masks, sample=False):
+    x = game_str + MASK_CHAR if masks else game_str
     x = torch.tensor([stoi[s] for s in x], dtype=torch.long)[None,...].to(device)
-
+    
     pred = utils.sample(gpt_model, x, 10, sample=sample)[0]
     completion = ''.join([itos[int(i)] for i in pred])
-    pred = completion.split(MASK_CHAR)[1].split(' ')[0]
-
-    return pred
+    if masks:
+        return completion.split(MASK_CHAR)[1].split(' ')[0]
+    else:
+        return completion[len(game_str):].split(' ')[0]
 
 
 def bot_vs_stockfish(game_str, gpt_model, stoi, itos, args):
@@ -55,7 +56,7 @@ def bot_vs_stockfish(game_str, gpt_model, stoi, itos, args):
         true_bot_move = None
         if len(game_str) >= 504:
             break
-        bot_move = get_prediction(game_str, gpt_model, stoi, itos)
+        bot_move = get_prediction(game_str, gpt_model, stoi, itos, args.masks)
         bot_move_count += 1
 
         try:
@@ -71,7 +72,7 @@ def bot_vs_stockfish(game_str, gpt_model, stoi, itos, args):
             # try re-sampling 5 times
             success = False
             for i in range(args.n_tries):
-                bot_move = get_prediction(game_str, gpt_model, stoi, itos, sample=True)
+                bot_move = get_prediction(game_str, gpt_model, stoi, itos, args.masks, sample=True)
 
                 try:
                     board.push_san(bot_move)
@@ -309,6 +310,8 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
 
+    parser.add_argument('--masks', action='store_false',
+                        help='Toggle masks OFF')
     parser.add_argument('--ckpt', type=str, default=None,
                         help='Path to model checkpoint to evaluate')
     parser.add_argument('--n_games', type=int, default=5,
