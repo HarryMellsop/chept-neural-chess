@@ -136,7 +136,8 @@ if __name__ == "__main__":
     if func == 'pretrain' and args.pretrain_params:
         assert questionary.confirm('Pretrain is provided with pretrain params. Continue?').ask()
     if func == 'finetune' and not args.pretrain_params:
-        raise ValueError('Cannot finteune without a pretrained model!')
+        if version != 3:
+            raise ValueError('Cannot finteune without a pretrained model!')
 
     # Get args if provided for finetune
     if func == 'finetune' and args.pretrain_params:
