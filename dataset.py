@@ -163,18 +163,26 @@ class Finetune_Late(Dataset):
 
 class Commentary_Dataset(Dataset):
 
-    def __init__(self, data, block_size, moves_vocab):
-
-        assert moves_vocab, "Must have pretrain vocab for finetuning"
-
-        # TODO: GET MOVES VOCAB
+    def __init__(self, data, block_size, pretrain_vocab=None):
 
         self.block_size = block_size
         self.PAD_CHAR = u"\u25A1"
         self.MASK_CHAR = u"\u2047"
 
-        # self.stoi = pretrain_vocab['stoi']
-        # self.itos = pretrain_vocab['itos']
+        chars = list(sorted(list(set(data))))
+        if '\n' in chars:
+            chars.remove('\n')
+
+        # Check and insert pad and mask chars
+        if self.PAD_CHAR in chars:
+            chars.remove(self.PAD_CHAR)
+        chars.insert(0, self.PAD_CHAR)
+        if self.MASK_CHAR in chars:
+            chars.remove(self.MASK_CHAR)
+        chars.insert(0, self.MASK_CHAR)
+
+        self.stoi = {ch: i for i, ch in enumerate(chars)}
+        self.itos = {i: ch for i, ch in enumerate(chars)}
 
         assert len(self.stoi) == len(self.itos)
 
@@ -183,7 +191,7 @@ class Commentary_Dataset(Dataset):
 
         print('Data has %d characters, %d unique.' % (self.data_size, self.vocab_size))
 
-        self.data = list(data.encode('utf-8').decode('ascii', errors='ignore').split('\n'))[:-1]
+        self.data = data.split('\n')
 
     def __len__(self):
         return len(self.data)
@@ -191,17 +199,10 @@ class Commentary_Dataset(Dataset):
     def __getitem__(self, idx):
 
         game = self.data[idx]
-        spaces = [idx for idx, cur in enumerate(game) if cur == ' ']
-        n_spaces = len(spaces)
 
-        min_idx = int(n_spaces * 0.75)
-        index = random.randint(min_idx - 1, n_spaces - 2)
-        index = random.randint(0, n_spaces - 2)
-        m_start, m_stop = spaces[index] + 1, spaces[index + 1]
-        x = game[:m_start] + self.MASK_CHAR + game[m_start:m_stop + 1] + self.MASK_CHAR
-        x = x + self.PAD_CHAR * (self.block_size - len(x))
-        y = self.PAD_CHAR * m_start + self.MASK_CHAR + game[m_start:m_stop + 1] + self.MASK_CHAR
-        y = y + self.PAD_CHAR * (self.block_size - len(y))
+        idx = game.find(self.MASK_CHAR)
+        x = game + self.PAD_CHAR * (self.block_size - len(game))
+        y = self.PAD_CHAR * idx + x[idx:]
 
         assert len(x) == len(y) == self.block_size
 
@@ -223,7 +224,8 @@ class Directory:
         self.config_args = config_args
         self.pretrain_vocab = pretrain_vocab
 
-        self.direct = finetune_versions.update({None: PretrainDataset})
+        self.direct = finetune_versions
+        self.direct.update({None: PretrainDataset})
 
     def __call__(self):
 

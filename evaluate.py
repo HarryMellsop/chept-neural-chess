@@ -328,8 +328,7 @@ if __name__ == '__main__':
         ckpt_path = args.ckpt
     args.save_name = ckpt_path.split('/')[1]
     # get ckpt
-    ckpt = torch.load(ckpt_path,
-                      map_location=torch.device(device))
+    ckpt = torch.load(ckpt_path, map_location=torch.device(device))
     model_config = ckpt['model_config']
     itos = ckpt['itos']
     stoi = ckpt['stoi']
