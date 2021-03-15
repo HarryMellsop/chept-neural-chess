@@ -3,7 +3,7 @@
 A Deep Transformer-Based Neural Chess Engine.  Baseline implementation using minGPT-2 architecture.  Improved architecture based on 12-layer 512 block-size 32-head attention custom neural transformer architecture inspired by GPT.  You can play the bot!
 
 # ChePT Data
-## To begin, install the relevant pretraining and finetuning datasets.  You'll need Kaggle and GSUtil.
+## Install the relevant pretraining and finetuning datasets.  You'll need Kaggle and GSUtil.
 
     $ chmod +x install_datasets.sh
     $ ./install_datasets.sh
@@ -13,7 +13,7 @@ Then, you'll need to preprocess the datasets:
     $ python ./data/process-dataset.py
 
 # Commentary Data
-## First, you will need to obtain the raw data.
+## Obtain the raw data using a data crawler.
 
 Clone this repository and follow the instructions to use their [``data/crawler``](https://github.com/harsh19/ChessCommentaryGeneration) tools to obtain data.
 
@@ -33,12 +33,14 @@ Then, you will need to use our ``process.ipynb`` to process the data. This noteb
 
 Now you're ready to go!
 
+# Training
 Training can be achieved through
 
     $ python run.py
     
+# Evaluation
 Inference - and playing the bot with a gui - can be achieved through the interactive notebook 
 
     $ jupyter notebook gui_inference.ipynb
     
-Note that you will need to `brew install stockfish` in order to run comparative inference of the neural bot against Stockfish 12, and provide move support where the model otherwise might struggle (we're working on this!).  The parameter file is currently not in git because of how large it is.  TODO: enable Git LFS, or provide another way for users to download the parameter file so that they don't need to train it.
+Note that you will need to `brew install stockfish` in order to run comparative inference of the neural bot against Stockfish 12.  The parameter file is currently not in git because of how large it is.  TODO: enable Git LFS, or provide another way for users to download the parameter file so that they don't need to train it.
