@@ -47,6 +47,7 @@ Training can be achieved through
     $ python run.py
     
 ## Evaluation
+TODO -- gui to see (with some pics/gifs), evaluate script (by model type), analyzing results (notebook)
 Inference - and playing the bot with a gui - can be achieved through the interactive notebook 
 
     $ jupyter notebook gui_inference.ipynb
