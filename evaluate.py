@@ -198,7 +198,7 @@ def display_results(num_illegal_moves,
 
     with open('bot_scores.pkl', 'wb') as f:
         pickle.dump(bot_arr, f)
-    
+
     with open('comp_scores.pkl', 'wb') as f:
         pickle.dump(comp_arr, f)
 
@@ -304,9 +304,6 @@ def get_recent_ckpt(ckpt_dir):
 
 
 if __name__ == '__main__':
-
-    # TODO: auto-grab new ckpnts?
-    # TODO: Evaluation of move ratio in addition to invalids
 
     parser = argparse.ArgumentParser()
 
