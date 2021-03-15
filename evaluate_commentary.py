@@ -116,13 +116,13 @@ def eval_scores(references, hypotheses):
         reference, hypothesis = references[i], hypotheses[i]
         lengths.append({'Reference Length': len(reference),
                         'Prediction Length': len(hypothesis)})
+        sentences.append({'Reference': reference,
+                          'Predicted': hypothesis})
         reference, hypothesis = reference.split(' '), hypothesis.split(' ')
         # TODO: weights based on lengths of sentences
         BLEUscore = nltk.translate.bleu_score.sentence_bleu([reference], hypothesis,
                                                             smoothing_function=SmoothingFunction(epsilon=1e-12).method1)
         BLEUscores.append(BLEUscore)
-        sentences.append({'Reference': reference,
-                          'Predicted': hypothesis})
 
     avg_bleu = np.mean(BLEUscores)
     results_dict = {'BLEU Scores': BLEUscores,
@@ -154,7 +154,7 @@ def main(comm_model, chept_model, test_file, comm_vocabs, chept_vocabs, args):
         references = []
         hypotheses = []
         pgns = []
-        test_scenarios = test_scenarios[300:303]
+        test_scenarios = test_scenarios[400:450]
         for test in tqdm(test_scenarios):
             split = test.split(MASK_CHAR)
             references.append(split[1])
