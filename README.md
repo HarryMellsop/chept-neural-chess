@@ -2,8 +2,15 @@
 
 A Deep Transformer-Based Neural Chess Engine.  Baseline implementation using minGPT-2 architecture.  Improved architecture based on 12-layer 512 block-size 32-head attention custom neural transformer architecture inspired by GPT.  You can play the bot!
 
-# ChePT Data
-## Install the relevant pretraining and finetuning datasets.  You'll need Kaggle and GSUtil.
+## Table of Contents
+
+- [ChePT Data](#chept-data)
+- [Commentary Data](#commentary-data)
+- [Training](#training)
+- [Evaluation](#evaluation)
+
+## ChePT Data
+### Install the relevant pretraining and finetuning datasets.  You'll need Kaggle and GSUtil.
 
     $ chmod +x install_datasets.sh
     $ ./install_datasets.sh
@@ -12,8 +19,8 @@ Then, you'll need to preprocess the datasets:
 
     $ python ./data/process-dataset.py
 
-# Commentary Data
-## Obtain the raw data using a data crawler.
+## Commentary Data
+### Obtain the raw data using a data crawler.
 
 Clone this repository and follow the instructions to use their [``data/crawler``](https://github.com/harsh19/ChessCommentaryGeneration) tools to obtain data.
 
@@ -33,12 +40,13 @@ Then, you will need to use our ``process.ipynb`` to process the data. This noteb
 
 Now you're ready to go!
 
-# Training
+## Training
+TODO -- pretrain, finetune, param saving/loading, flags and options for scripts
 Training can be achieved through
 
     $ python run.py
     
-# Evaluation
+## Evaluation
 Inference - and playing the bot with a gui - can be achieved through the interactive notebook 
 
     $ jupyter notebook gui_inference.ipynb
