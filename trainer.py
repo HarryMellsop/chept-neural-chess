@@ -1,9 +1,8 @@
-import math
 from tqdm import tqdm
 import numpy as np
+import os
 import torch
 import torch.optim as optim
-from torch.optim.lr_scheduler import LambdaLR
 from torch.utils.data.dataloader import DataLoader
 
 
@@ -12,32 +11,33 @@ class TrainerConfig:
     # optimization parameters
     max_epochs = 10
     batch_size = 64
-    learning_rate = 3e-4
-    betas = (0.9, 0.95)
+    learning_rate = 1e-4
     grad_norm_clip = 1.0
-    weight_decay = 0.1
-
-    # learning rate decay params: linear warmup followed by cosine decay to 10% of original
-    lr_decay = False
-    warmup_tokens = 375e6 # these two numbers come from the GPT-3 paper, but may not be good defaults elsewhere
-    final_tokens = 260e9 # (at what point we reach 10% of original LR)
 
     # checkpoint settings
-    ckpt_path = 'ckpt/pretrain.model.params'
     num_workers = 0
 
-    def __init__(self, **kwargs):
-        for k,v in kwargs.items():
-            setattr(self, k, v)
+    def __init__(self, func, state_dict, args_dict):
+        self.func = func
+        self.state_dict = state_dict
+        self.__dict__.update(args_dict)
 
 
 class Trainer:
 
-    def __init__(self, model, train_dataset, test_dataset, config):
+    def __init__(self, model, train_dataset, save_dir, config):
         self.model = model
+        self.model_config = model.model_config
         self.train_dataset = train_dataset
-        self.test_dataset = test_dataset
         self.config = config
+        self.func = self.config.func
+        self.load_params = self.config.state_dict
+
+        self.save_dir = save_dir
+
+        if self.func == 'finetune' and self.load_params:
+            print('\nLoading pretrain params in...\n')
+            self.model.load_state_dict(self.load_params)
 
         # take over whatever gpus are on the system
         self.device = 'cpu'
@@ -46,94 +46,62 @@ class Trainer:
             self.model = torch.nn.DataParallel(self.model).to(self.device)
 
     def save_checkpoint(self, path):
+        save_path = os.path.join(self.save_dir, path)
         ckpt_model = self.model.module if hasattr(self.model, "module") else self.model
-        torch.save(ckpt_model.state_dict(), path)
+        save_dict = {'state_dict': ckpt_model.state_dict(),
+                     'itos': self.train_dataset.itos,
+                     'stoi': self.train_dataset.stoi,
+                     'model_config': self.model_config,
+                     'train_config': self.config}
+
+        torch.save(save_dict, save_path)
 
     def train(self):
         model, config = self.model, self.config
 
         # create the optimizer
-        no_decay = ["bias", "LayerNorm.weight"]
-        params_decay = [p for n, p in model.named_parameters() if not any(nd in n for nd in no_decay)]
-        params_nodecay = [p for n, p in model.named_parameters() if any(nd in n for nd in no_decay)]
-        optim_groups = [
-            {"params": params_decay, "weight_decay": config.weight_decay},
-            {"params": params_nodecay, "weight_decay": 0.0},
-        ]
-        optimizer = optim.AdamW(optim_groups, 
+        optimizer = optim.Adam(
+            params=model.parameters(),
             lr=config.learning_rate,
-            betas=config.betas
         )
 
         def run_epoch(split):
-            is_train = split == 'train'
-            model.train(is_train)
+            model.train(True)
 
-            data = self.train_dataset if is_train else self.test_dataset
+            data = self.train_dataset
             loader = DataLoader(data, 
                 batch_size=config.batch_size, 
                 num_workers=config.num_workers
             )
 
-            losses = []
-            min_loss = float('infinity')
-            pbar = tqdm(enumerate(loader), total=len(loader)) if is_train else enumerate(loader)
+            min_loss = float('inf')
+            pbar = tqdm(enumerate(loader), total=len(loader))
             for it, (x, y) in pbar:
-
                 if it % 1000 == 0:
-                    self.save_checkpoint('ckpt/model.iter.params')
+                    self.save_checkpoint(f'iter_{it}.pt')
 
                 # place data on the correct device
                 x = x.to(self.device)
                 y = y.to(self.device)
 
                 # forward the model
-                with torch.set_grad_enabled(is_train):
+                with torch.set_grad_enabled(True):
                     logits, loss = model(x, y)
                     loss = loss.mean()
-                    losses.append(loss.item())
+                if loss <= (0.8 * min_loss):
+                    min_loss = loss
+                    self.save_checkpoint('best_loss.pt')
 
-                    if loss < min_loss:
-                        min_loss = loss
-                        self.save_checkpoint('ckpt/model.best.params')
+                # backprop and update the parameters
+                model.zero_grad()
+                loss.backward()
+                torch.nn.utils.clip_grad_norm_(model.parameters(), config.grad_norm_clip)
+                optimizer.step()
 
-                if is_train:
-
-                    # backprop and update the parameters
-                    model.zero_grad()
-                    loss.backward()
-                    torch.nn.utils.clip_grad_norm_(model.parameters(), config.grad_norm_clip)
-                    optimizer.step()
-
-                    # decay the learning rate based on our progress
-                    if config.lr_decay:
-                        self.tokens += (y >= 0).sum()
-                        if self.tokens < config.warmup_tokens:
-
-                            # linear warmup
-                            lr_mult = float(self.tokens) / float(max(1, config.warmup_tokens))
-
-                        else:
-
-                            # cosine learning rate decay
-                            progress = float(self.tokens - config.warmup_tokens) / float(max(1, config.final_tokens - config.warmup_tokens))
-                            lr_mult = max(0.1, 0.5 * (1.0 + math.cos(math.pi * progress)))
-
-                        lr = config.learning_rate * lr_mult
-                        for param_group in optimizer.param_groups:
-                            param_group['lr'] = lr
-
-                    else:
-                        lr = config.learning_rate
-
-                    # report progress
-                    pbar.set_description(f"epoch {epoch + 1} iter {it}: train loss {loss.item():.3f}. lr {lr:e}")
-
-            if not is_train:
-                print("test loss: %f", np.mean(losses))
+                # report progress
+                pbar.set_description(f"epoch {epoch + 1} iter {it}: train loss {loss.item():.5f}")
 
         self.tokens = 0
         for epoch in range(config.max_epochs):
             run_epoch('train')
-            if self.test_dataset is not None: run_epoch('test')
-            self.save_checkpoint('ckpt/model.final.params')
+            self.save_checkpoint(f'epoch_{epoch}.pt')

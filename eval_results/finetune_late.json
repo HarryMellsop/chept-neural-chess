@@ -1,0 +1,16 @@
+{
+    "Number of games": 500,
+    "Number of moves": 28,
+    "First illegal move": 17,
+    "Attempted illegal moves": 4,
+    "Games without illegal moves": 103,
+    "Final illegal moves": 0,
+    "Percent attempted illegal moves": 14.224,
+    "Percent final illegal moves": 1.9,
+    "Wins": 0,
+    "Draws": 3,
+    "Average move evaluation": -0.32727636664338566,
+    "Average early game move evaluation": -0.45778767809217635,
+    "Average mid game move evaluation": -0.5814214996720041,
+    "Average late game move evaluation": -0.3009730575969869
+}
