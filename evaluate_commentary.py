@@ -10,26 +10,31 @@ import model
 import utils
 import pickle
 import chess.engine
+import nltk
 
 MASK_CHAR = u"\u2047"
 engine = chess.engine.SimpleEngine.popen_uci("/usr/local/bin/stockfish")
 device = torch.cuda.current_device() if torch.cuda.is_available() else 'cpu'
 
 
-def get_prediction(game_str, gpt_model, stoi, itos, masks, sample=False):
+def get_prediction(game_str, gpt_model, vocabs, masks, size=10, sample=False):
+
+    stoi = vocabs['stoi']
+    itos = vocabs['itos']
     x = game_str + MASK_CHAR if masks else game_str
     x = torch.tensor([stoi[s] for s in x], dtype=torch.long)[None,...].to(device)
 
-    pred = utils.sample(gpt_model, x, 10, sample=sample)[0]
+    pred = utils.sample(gpt_model, x, size, sample=sample)[0]
     completion = ''.join([itos[int(i)] for i in pred])
     if masks:
-        return completion.split(MASK_CHAR)[1].split(' ')[0]
+        return completion.split(MASK_CHAR)[1]
     else:
-        return completion[len(game_str):].split(' ')[0]
+        return completion[len(game_str):]
 
 
-def bot_vs_stockfish(game_str, gpt_model, stoi, itos, args):
+def bot_vs_stockfish(game_str, comm_model, chept_model, comm_vocabs, chept_vocabs, args):
 
+    commentaries = []
     board = chess.Board()
     while True:
         comp_move = engine.play(board, chess.engine.Limit(time=0.0005))
@@ -46,7 +51,7 @@ def bot_vs_stockfish(game_str, gpt_model, stoi, itos, args):
         # handle cases where game str is larger than block size
         if len(game_str) >= 504:
             break
-        bot_move = get_prediction(game_str, gpt_model, stoi, itos, args.masks)
+        bot_move = get_prediction(game_str, chept_model, chept_vocabs args.masks).split(' ')[0]
 
         try:
             board.push_san(bot_move)
@@ -56,7 +61,7 @@ def bot_vs_stockfish(game_str, gpt_model, stoi, itos, args):
             # try re-sampling
             success = False
             for i in range(args.n_tries):
-                bot_move = get_prediction(game_str, gpt_model, stoi, itos, args.masks, sample=True)
+                bot_move = get_prediction(game_str, chept_model, chept_vocabs, args.masks, sample=True).split(' ')[0]
 
                 try:
                     board.push_san(bot_move)
@@ -73,13 +78,17 @@ def bot_vs_stockfish(game_str, gpt_model, stoi, itos, args):
 
         game_str = game_str + bot_move + ' '
 
+        # get commentary:
+        commentary = get_prediction(game_str, comm_model, comm_vocabs, args.masks, size=args.comm_size)
+        commentaries.append(game_str + commentary)
+
         if board.is_stalemate() or board.is_insufficient_material():
             break
 
         if board.is_checkmate():
             break
 
-    return game_str
+    return commentaries
 
 
 def save_results(results, args, scenario):
@@ -96,12 +105,25 @@ def save_results(results, args, scenario):
         json.dump(results, f, ensure_ascii=False, indent=4)
 
 
+def eval_scores(references, hypotheses):
+
+    BLEUscores = []
+    for i in range(references):
+        reference, hypothesis = references[i], hypotheses[i]
+        # TODO: weights based on lengths of sentences
+        BLEUscore = nltk.translate.bleu_score.sentence_bleu([reference], hypothesis)
+        BLEUscores.append(BLEUscore)
+
+    results_dict = {'BLEU Score': BLEUscores}
+    return results_dict
+
+
 def main(comm_model, chept_model, test_file, comm_vocabs, chept_vocabs, args):
 
     if chept_model and chept_vocabs:
         print(f'\nPlaying {args.n_games} games of ChePT vs. Stockfish')
 
-        results = []
+        results = {}
         for i in tqdm(range(args.n_games)):
             result = bot_vs_stockfish('',
                                       comm_model,
@@ -109,16 +131,21 @@ def main(comm_model, chept_model, test_file, comm_vocabs, chept_vocabs, args):
                                       comm_vocabs,
                                       chept_vocabs,
                                       args)
-            results.append(result)
-        print(result)
+            results[i] = result
         save_results(results, args)
     else:
         test_scenarios = open(test_file).readlines()
         print(f'\nEvaluating {len(test_scenarios)} test scenarios.')
+        references = []
+        hypotheses = []
+        for test in test_scenarios:
+            split = test.split(MASK_CHAR)
+            references.append(split[1].split(' '))
+            commentary = get_prediction(split[0], comm_model, comm_vocabs, args.masks, size=args.comm_size)
+            hypotheses.append(commentary.split(' '))
 
-        results = '#TODO'
-        print(results)
         # eval results (such as bleu score)
+        results = eval_scores(references, hypotheses)
         save_results(results, args)
 
 
@@ -159,6 +186,8 @@ if __name__ == '__main__':
                         help='Numer of games to evaluate')
     parser.add_argument('--n_tries', type=int, default=5,
                         help='Number of retries to give ChePT')
+    parser.add_argument('--comm_size', type=int, default=200,
+                        help='Number of samples to take for commentary generation')
     parser.add_argument('--masks', action='store_false',
                         help='Toggle masks OFF')
 
