@@ -12,6 +12,8 @@ import pickle
 import chess.engine
 import nltk
 
+from nltk.translate.bleu_score import SmoothingFunction
+
 MASK_CHAR = u"\u2047"
 engine = chess.engine.SimpleEngine.popen_uci("/usr/local/bin/stockfish")
 device = torch.cuda.current_device() if torch.cuda.is_available() else 'cpu'
@@ -51,7 +53,7 @@ def bot_vs_stockfish(game_str, comm_model, chept_model, comm_vocabs, chept_vocab
         # handle cases where game str is larger than block size
         if len(game_str) >= 504:
             break
-        bot_move = get_prediction(game_str, chept_model, chept_vocabs args.masks).split(' ')[0]
+        bot_move = get_prediction(game_str, chept_model, chept_vocabs, args.masks).split(' ')[0]
 
         try:
             board.push_san(bot_move)
@@ -108,13 +110,26 @@ def save_results(results, args, scenario):
 def eval_scores(references, hypotheses):
 
     BLEUscores = []
-    for i in range(references):
+    lengths = []
+    sentences = []
+    for i in range(len(references)):
         reference, hypothesis = references[i], hypotheses[i]
+        lengths.append({'Reference Length': len(reference),
+                        'Prediction Length': len(hypothesis)})
+        reference, hypothesis = reference.split(' '), hypothesis.split(' ')
         # TODO: weights based on lengths of sentences
-        BLEUscore = nltk.translate.bleu_score.sentence_bleu([reference], hypothesis)
+        BLEUscore = nltk.translate.bleu_score.sentence_bleu([reference], hypothesis,
+                                                            smoothing_function=SmoothingFunction(epsilon=1e-12).method1)
         BLEUscores.append(BLEUscore)
+        sentences.append({'Reference': reference,
+                          'Predicted': hypothesis})
 
-    results_dict = {'BLEU Score': BLEUscores}
+    avg_bleu = np.mean(BLEUscores)
+    results_dict = {'BLEU Scores': BLEUscores,
+                    'Average BLEU': float(avg_bleu),
+                    'Sentences': sentences,
+                    'Sentence Lengths': lengths}
+
     return results_dict
 
 
@@ -132,21 +147,27 @@ def main(comm_model, chept_model, test_file, comm_vocabs, chept_vocabs, args):
                                       chept_vocabs,
                                       args)
             results[i] = result
-        save_results(results, args)
+        save_results(results, args, '_with_both')
     else:
         test_scenarios = open(test_file).readlines()
         print(f'\nEvaluating {len(test_scenarios)} test scenarios.')
         references = []
         hypotheses = []
-        for test in test_scenarios:
+        pgns = []
+        test_scenarios = test_scenarios[300:303]
+        for test in tqdm(test_scenarios):
             split = test.split(MASK_CHAR)
-            references.append(split[1].split(' '))
-            commentary = get_prediction(split[0], comm_model, comm_vocabs, args.masks, size=args.comm_size)
-            hypotheses.append(commentary.split(' '))
+            references.append(split[1])
+            commentary = get_prediction(split[0], comm_model, comm_vocabs, args.masks, size=args.comm_size, sample=args.sampling)
+            pgns.append(split[0])
+            print(commentary)
+            hypotheses.append(commentary)
 
         # eval results (such as bleu score)
         results = eval_scores(references, hypotheses)
-        save_results(results, args)
+        results.update({'PGNs': pgns})
+
+        save_results(results, args, '_eval_text')
 
 
 def get_recent_ckpt(ckpt_dir):
@@ -176,7 +197,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('comm_ckpt', type=str, default='ckpts/commentary_final',
+    parser.add_argument('--comm_ckpt', type=str, default='ckpts/commentary_final',
                         help='Path to commentary model to use')
     parser.add_argument('--chept_ckpt', type=str, default='ckpts/finetune_late/iter_152000.pt',
                         help='Path to ChePT model to use')
@@ -190,6 +211,8 @@ if __name__ == '__main__':
                         help='Number of samples to take for commentary generation')
     parser.add_argument('--masks', action='store_false',
                         help='Toggle masks OFF')
+    parser.add_argument('--sampling', action='store_true',
+                        help='Toggle sampling ON')
 
     args = parser.parse_args()
 
@@ -214,9 +237,9 @@ if __name__ == '__main__':
     comm_itos = comm_ckpt['itos']
     comm_stoi = comm_ckpt['stoi']
 
-    comm_vocab = {'itos': comm_itos,
-                  'stoi': comm_stoi
-                  }
+    comm_vocabs = {'itos': comm_itos,
+                   'stoi': comm_stoi
+                   }
 
     # build model config
     comm_mconf = model.GPTConfig(
@@ -236,9 +259,9 @@ if __name__ == '__main__':
         chept_itos = chept_ckpt['itos']
         chept_stoi = chept_ckpt['stoi']
 
-        chept_vocab = {'itos': chept_itos,
-                       'stoi': chept_stoi
-                       }
+        chept_vocabs = {'itos': chept_itos,
+                        'stoi': chept_stoi
+                        }
 
         # build model config
         chept_mconf = model.GPTConfig(
@@ -253,7 +276,7 @@ if __name__ == '__main__':
         chept_model.load_state_dict(chept_ckpt['state_dict'])
     else:
         chept_model = None
-        chept_vocab = None
+        chept_vocabs = None
 
-    main(comm_model, chept_model, test_file, args)
+    main(comm_model, chept_model, test_file, comm_vocabs, chept_vocabs, args)
     engine.quit()
