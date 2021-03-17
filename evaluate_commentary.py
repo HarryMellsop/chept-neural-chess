@@ -73,15 +73,13 @@ def bot_vs_stockfish(game_str, comm_model, chept_model, comm_vocabs, chept_vocab
                     pass
 
             if not success:
-                bot_move = engine.play(board, chess.engine.Limit(time=0.05))
-                bot_move_str = board.san(bot_move.move)
-                board.push(bot_move.move)
-                bot_move = bot_move_str
+                break
 
         game_str = game_str + bot_move + ' '
 
         # get commentary:
         commentary = get_prediction(game_str, comm_model, comm_vocabs, args.masks, size=args.comm_size)
+        print(game_str, commentary)
         commentaries.append(game_str + commentary)
 
         if board.is_stalemate() or board.is_insufficient_material():

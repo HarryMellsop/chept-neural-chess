@@ -84,10 +84,7 @@ def bot_vs_stockfish(game_str, gpt_model, stoi, itos, args):
 
             if not success:
                 final_illegal += 1
-                bot_move = engine.play(board, chess.engine.Limit(time=0.05))
-                bot_move_str = board.san(bot_move.move)
-                board.push(bot_move.move)
-                bot_move = bot_move_str
+                break
 
         if true_bot_move:
             bot_score_tup = engine.analyse(board, chess.engine.Limit(time=0.1), game='key1')

@@ -11,7 +11,8 @@ class Finetune_Full(Dataset):
 
         self.block_size = block_size
         self.PAD_CHAR = u"\u25A1"
-        self.MASK_CHAR = u"\u2047"
+        self.MASK_CHAR_1 = u"\u2047"
+        self.MASK_CHAR_2 = u"\u2047"
 
         self.stoi = pretrain_vocab['stoi']
         self.itos = pretrain_vocab['itos']
@@ -20,6 +21,17 @@ class Finetune_Full(Dataset):
 
         self.vocab_size = len(self.stoi)
         self.data_size = len(data)
+
+        # Check and insert pad and mask chars
+        if self.PAD_CHAR in chars:
+            chars.remove(self.PAD_CHAR)
+        chars.insert(0, self.PAD_CHAR)
+        if self.MASK_CHAR_1 in chars:
+            chars.remove(self.MASK_CHAR_1)
+        chars.insert(0, self.MASK_CHAR_1)
+        if self.MASK_CHAR_2 in chars:
+            chars.remove(self.MASK_CHAR_2)
+        chars.insert(0, self.MASK_CHAR_2)
 
         print('Data has %d characters, %d unique.' % (self.data_size, self.vocab_size))
 
@@ -41,9 +53,9 @@ class Finetune_Full(Dataset):
         # different way to calc loss? 99% of it is just padding 512 chars
         index = random.randint(0, n_spaces - 2)
         m_start, m_stop = spaces[index] + 1, spaces[index + 1]
-        x = game[:m_start] + self.MASK_CHAR + game[m_start:m_stop + 1] + self.MASK_CHAR
+        x = game[:m_start] + self.MASK_CHAR_1 + game[m_start:m_stop + 1] + self.MASK_CHAR_1
         x = x + self.PAD_CHAR * (self.block_size - len(x))
-        y = self.PAD_CHAR * m_start + self.MASK_CHAR + game[m_start:m_stop + 1] + self.MASK_CHAR
+        y = self.PAD_CHAR * m_start + self.MASK_CHAR_1 + game[m_start:m_stop + 1] + self.MASK_CHAR_1
         y = y + self.PAD_CHAR * (self.block_size - len(y))
 
         assert len(x) == len(y) == self.block_size
@@ -65,7 +77,8 @@ class Finetune_Middle(Dataset):
 
         self.block_size = block_size
         self.PAD_CHAR = u"\u25A1"
-        self.MASK_CHAR = u"\u2047"
+        self.MASK_CHAR_1 = u"\u2047"
+        self.MASK_CHAR_2 = u"\u2047"
 
         self.stoi = pretrain_vocab['stoi']
         self.itos = pretrain_vocab['itos']
@@ -74,6 +87,17 @@ class Finetune_Middle(Dataset):
 
         self.vocab_size = len(self.stoi)
         self.data_size = len(data)
+
+        # Check and insert pad and mask chars
+        if self.PAD_CHAR in chars:
+            chars.remove(self.PAD_CHAR)
+        chars.insert(0, self.PAD_CHAR)
+        if self.MASK_CHAR_1 in chars:
+            chars.remove(self.MASK_CHAR_1)
+        chars.insert(0, self.MASK_CHAR_1)
+        if self.MASK_CHAR_2 in chars:
+            chars.remove(self.MASK_CHAR_2)
+        chars.insert(0, self.MASK_CHAR_2)
 
         print('Data has %d characters, %d unique.' % (self.data_size, self.vocab_size))
 
@@ -92,9 +116,9 @@ class Finetune_Middle(Dataset):
 
         index = random.randint((n_spaces // 2) - 1, n_spaces - 2)
         m_start, m_stop = spaces[index] + 1, spaces[index + 1]
-        x = game[:m_start] + self.MASK_CHAR + game[m_start:m_stop + 1] + self.MASK_CHAR
+        x = game[:m_start] + self.MASK_CHAR_1 + game[m_start:m_stop + 1] + self.MASK_CHAR_1
         x = x + self.PAD_CHAR * (self.block_size - len(x))
-        y = self.PAD_CHAR * m_start + self.MASK_CHAR + game[m_start:m_stop + 1] + self.MASK_CHAR
+        y = self.PAD_CHAR * m_start + self.MASK_CHAR_1 + game[m_start:m_stop + 1] + self.MASK_CHAR_1
         y = y + self.PAD_CHAR * (self.block_size - len(y))
 
         assert len(x) == len(y) == self.block_size
@@ -116,7 +140,8 @@ class Finetune_Late(Dataset):
 
         self.block_size = block_size
         self.PAD_CHAR = u"\u25A1"
-        self.MASK_CHAR = u"\u2047"
+        self.MASK_CHAR_1 = u"\u2047"
+        self.MASK_CHAR_2 = u"\u2047"
 
         self.stoi = pretrain_vocab['stoi']
         self.itos = pretrain_vocab['itos']
@@ -125,6 +150,17 @@ class Finetune_Late(Dataset):
 
         self.vocab_size = len(self.stoi)
         self.data_size = len(data)
+
+        # Check and insert pad and mask chars
+        if self.PAD_CHAR in chars:
+            chars.remove(self.PAD_CHAR)
+        chars.insert(0, self.PAD_CHAR)
+        if self.MASK_CHAR_1 in chars:
+            chars.remove(self.MASK_CHAR_1)
+        chars.insert(0, self.MASK_CHAR_1)
+        if self.MASK_CHAR_2 in chars:
+            chars.remove(self.MASK_CHAR_2)
+        chars.insert(0, self.MASK_CHAR_2)
 
         print('Data has %d characters, %d unique.' % (self.data_size, self.vocab_size))
 
@@ -145,9 +181,9 @@ class Finetune_Late(Dataset):
         index = random.randint(min_idx - 1, n_spaces - 2)
         index = random.randint(0, n_spaces - 2)
         m_start, m_stop = spaces[index] + 1, spaces[index + 1]
-        x = game[:m_start] + self.MASK_CHAR + game[m_start:m_stop + 1] + self.MASK_CHAR
+        x = game[:m_start] + self.MASK_CHAR_1 + game[m_start:m_stop + 1] + self.MASK_CHAR_1
         x = x + self.PAD_CHAR * (self.block_size - len(x))
-        y = self.PAD_CHAR * m_start + self.MASK_CHAR + game[m_start:m_stop + 1] + self.MASK_CHAR
+        y = self.PAD_CHAR * m_start + self.MASK_CHAR_1 + game[m_start:m_stop + 1] + self.MASK_CHAR_1
         y = y + self.PAD_CHAR * (self.block_size - len(y))
 
         assert len(x) == len(y) == self.block_size
@@ -167,7 +203,8 @@ class Commentary_Dataset(Dataset):
 
         self.block_size = block_size
         self.PAD_CHAR = u"\u25A1"
-        self.MASK_CHAR = u"\u2047"
+        self.MASK_CHAR_1 = u"\u2047"
+        self.MASK_CHAR_2 = u"\u2048"
 
         chars = list(sorted(list(set(data))))
         if '\n' in chars:
@@ -177,9 +214,12 @@ class Commentary_Dataset(Dataset):
         if self.PAD_CHAR in chars:
             chars.remove(self.PAD_CHAR)
         chars.insert(0, self.PAD_CHAR)
-        if self.MASK_CHAR in chars:
-            chars.remove(self.MASK_CHAR)
-        chars.insert(0, self.MASK_CHAR)
+        if self.MASK_CHAR_1 in chars:
+            chars.remove(self.MASK_CHAR_1)
+        chars.insert(0, self.MASK_CHAR_1)
+        if self.MASK_CHAR_2 in chars:
+            chars.remove(self.MASK_CHAR_2)
+        chars.insert(0, self.MASK_CHAR_2)
 
         self.stoi = {ch: i for i, ch in enumerate(chars)}
         self.itos = {i: ch for i, ch in enumerate(chars)}
@@ -200,7 +240,8 @@ class Commentary_Dataset(Dataset):
 
         game = self.data[idx]
 
-        idx = game.find(self.MASK_CHAR)
+        idx = game.find(self.MASK_CHAR_1)
+        game = game.replace(self.MASK_CHAR_1, self.MASK_CHAR_2)
         x = game + self.PAD_CHAR * (self.block_size - len(game))
         y = self.PAD_CHAR * idx + x[idx:]
 
@@ -209,8 +250,8 @@ class Commentary_Dataset(Dataset):
         x = x[:-1]
         y = y[1:]
 
-        x = torch.tensor([self.stoi[c] for c in x], dtype=torch.long)
-        y = torch.tensor([self.stoi[c] for c in y], dtype=torch.long)
+        #x = torch.tensor([self.stoi[c] for c in x], dtype=torch.long)
+        #y = torch.tensor([self.stoi[c] for c in y], dtype=torch.long)
 
         return x, y
 
@@ -341,26 +382,37 @@ class PretrainDataset(Dataset):
 
         self.block_size = block_size
         self.PAD_CHAR = u"\u25A1"
-        self.MASK_CHAR = u"\u2047"
+        self.MASK_CHAR_1 = u"\u2047"
+        self.MASK_CHAR_2 = u"\u2047"
 
         chars = list(sorted(list(set(data))))
         if '\n' in chars:
             chars.remove('\n')
 
+        self.stoi = pretrain_vocab['stoi']
+        self.itos = pretrain_vocab['itos']
+
+        assert len(self.stoi) == len(self.itos)
+
+        self.vocab_size = len(self.stoi)
+        self.data_size = len(data)
+
         # Check and insert pad and mask chars
-        assert self.PAD_CHAR not in chars, 'Pad character redundant!'
+        if self.PAD_CHAR in chars:
+            chars.remove(self.PAD_CHAR)
         chars.insert(0, self.PAD_CHAR)
-        assert self.MASK_CHAR not in chars, 'Mask character redundant!'
-        chars.insert(0, self.MASK_CHAR)
+        if self.MASK_CHAR_1 in chars:
+            chars.remove(self.MASK_CHAR_1)
+        chars.insert(0, self.MASK_CHAR_1)
+        if self.MASK_CHAR_2 in chars:
+            chars.remove(self.MASK_CHAR_2)
+        chars.insert(0, self.MASK_CHAR_2)
 
         self.stoi = {ch: i for i, ch in enumerate(chars)}
         self.itos = {i: ch for i, ch in enumerate(chars)}
 
         data_size, vocab_size = len(data), len(chars)
         print('Data has %d characters, %d unique.' % (data_size, vocab_size))
-
-        self.data_size = data_size
-        self.vocab_size = vocab_size
 
         self.data = list(data.encode('utf-8').decode('ascii', errors='ignore').split('\n'))
 
