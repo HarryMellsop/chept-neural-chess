@@ -8,6 +8,8 @@ A Deep Transformer-Based Neural Chess Engine.  Baseline implementation using min
 - [Commentary Data](#commentary-data)
 - [Training](#training)
 - [Evaluation](#evaluation)
+    - [GUI](#gui)
+    - [Testing](#testing)
 
 ## ChePT Data
 ### Install the relevant pretraining and finetuning datasets.  You'll need Kaggle and GSUtil.
@@ -64,9 +66,36 @@ There are many different flags to utilize depending on whether you are pretraini
 Any argument denoted with the word ``super`` will overwite arguments loaded in the pretrain_params file and the args_path file.
     
 ## Evaluation
-TODO -- gui to see (with some pics/gifs), evaluate script (by model type), analyzing results (notebook)
-Inference - and playing the bot with a gui - can be achieved through the interactive notebook 
 
+### GUI
+To watch and play the games using a GUI, utilize the Jupyter Notebook compatible script:
     $ jupyter notebook gui_inference.ipynb
     
-Note that you will need to `brew install stockfish` in order to run comparative inference of the neural bot against Stockfish 12.  The parameter file is currently not in git because of how large it is.  TODO: enable Git LFS, or provide another way for users to download the parameter file so that they don't need to train it.
+Note that you will need to `brew install stockfish` in order to run comparative inference of the neural bot against Stockfish 12.  The parameter file is currently not in git because of how large it is.
+
+### Testing
+There are two provided evaluation scripts, ``evaluate.py`` and ``evaluate_commentary.py``. These scripts evaluate move quality and commentary quality, respectively.
+
+For the script:
+    $ evaluate.py
+    
+There are a few flags to utilize:
+* ``--masks``: Toggle masks OFF
+* ``--ckpt``: Path to model checkpoint to evaluate
+* ``--n_games``: Numer of games to evaluate
+* ``--n_tries``: Number of retries to give ChePT
+
+The flags ``n_games`` and ``n_tries`` default to 5.
+
+For the script:
+    $ evaluate_commetnary.py
+There are a few more flags to utilize:
+* ``--comm_ckpt``: Path to commentary model to use
+* ``--chept_ckpt``: Path to ChePT model to use
+* ``--test_file``: Test inputs to evaluate
+* ``--n_games``: Numer of games to evaluate
+* ``--n_tries``: Number of retries to give ChePT
+* ``--comm_size``: Number of samples to take for commentary generation
+* ``--masks``: Toggle masks OFF
+* ``--sampling``: Toggle sampling ON
+* ``--no_refs``: Toggle references off
