@@ -1,6 +1,6 @@
 # ChePT
 
-A Deep Transformer-Based Neural Chess Engine.  Baseline implementation using minGPT-2 architecture.  Improved architecture based on 12-layer 512 block-size 32-head attention custom neural transformer architecture inspired by GPT.  You can play the bot!
+A Deep Transformer-Based Neural Chess Engine.  Baseline implementation using minGPT-2 architecture.  Improved architecture based on 12-layer 512 block-size 32-head attention custom neural transformer architecture inspired by GPT.
 
 ## Table of Contents
 
