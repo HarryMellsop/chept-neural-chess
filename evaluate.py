@@ -141,8 +141,9 @@ def eval_moves(bot_arr, comp_arr):
         bot_scores = np.array(bot_arr[i])
         comp_scores = np.array(comp_arr[i])
 
-        p1 = len(bot_scores) // 3
-        p2 = 2 * p1
+        # early and mid game definitions
+        p1 = 16
+        p2 = 32
 
         bot_early, comp_early = bot_scores[:p1], comp_scores[:p1]
         bot_mid, comp_mid = bot_scores[p1:p2], comp_scores[p1:p2]

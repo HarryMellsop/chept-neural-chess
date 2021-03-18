@@ -2,8 +2,12 @@ import random
 import torch
 from torch.utils.data import Dataset
 
+game_splits = {'early': 0,
+               'mid': 16,
+               'late': 32}
 
-class Finetune_Full(Dataset):
+
+class Finetune_Early(Dataset):
 
     def __init__(self, data, block_size, pretrain_vocab):
 
@@ -14,13 +18,9 @@ class Finetune_Full(Dataset):
         self.MASK_CHAR_1 = u"\u2047"
         self.MASK_CHAR_2 = u"\u2047"
 
-        self.stoi = pretrain_vocab['stoi']
-        self.itos = pretrain_vocab['itos']
-
-        assert len(self.stoi) == len(self.itos)
-
-        self.vocab_size = len(self.stoi)
-        self.data_size = len(data)
+        chars = list(sorted(list(set(data))))
+        if '\n' in chars:
+            chars.remove('\n')
 
         # Check and insert pad and mask chars
         if self.PAD_CHAR in chars:
@@ -33,9 +33,22 @@ class Finetune_Full(Dataset):
             chars.remove(self.MASK_CHAR_2)
         chars.insert(0, self.MASK_CHAR_2)
 
+        self.stoi = pretrain_vocab['stoi']
+        self.itos = pretrain_vocab['itos']
+
+        assert len(self.stoi) == len(self.itos)
+
+        self.vocab_size = len(self.stoi)
+        self.data_size = len(data)
+
         print('Data has %d characters, %d unique.' % (self.data_size, self.vocab_size))
 
         self.data = list(data.encode('utf-8').decode('ascii', errors='ignore').split('\n'))[:-1]
+
+        # ensure all game strings are long enough for process
+        self.data = list(filter(lambda x: len(x.split(' ')) - 1 >= game_splits['early'], self.data))
+        self.min_pt = 0
+        self.max_pt = game_splits['mid']
 
     def __len__(self):
         return len(self.data)
@@ -46,12 +59,7 @@ class Finetune_Full(Dataset):
         spaces = [idx for idx, cur in enumerate(game) if cur == ' ']
         n_spaces = len(spaces)
 
-        # index = random.randint((n_spaces // 2) - 1, n_spaces - 2)
-        # doesn't know what to do early game now cuz it was never "prompted"
-        # finetuning #2 could be to focus only on ^^ >= 50% of game
-
-        # different way to calc loss? 99% of it is just padding 512 chars
-        index = random.randint(0, n_spaces - 2)
+        index = random.randint(self.min_pt, self.max_pt - 1)
         m_start, m_stop = spaces[index] + 1, spaces[index + 1]
         x = game[:m_start] + self.MASK_CHAR_1 + game[m_start:m_stop + 1] + self.MASK_CHAR_1
         x = x + self.PAD_CHAR * (self.block_size - len(x))
@@ -80,13 +88,9 @@ class Finetune_Middle(Dataset):
         self.MASK_CHAR_1 = u"\u2047"
         self.MASK_CHAR_2 = u"\u2047"
 
-        self.stoi = pretrain_vocab['stoi']
-        self.itos = pretrain_vocab['itos']
-
-        assert len(self.stoi) == len(self.itos)
-
-        self.vocab_size = len(self.stoi)
-        self.data_size = len(data)
+        chars = list(sorted(list(set(data))))
+        if '\n' in chars:
+            chars.remove('\n')
 
         # Check and insert pad and mask chars
         if self.PAD_CHAR in chars:
@@ -99,11 +103,22 @@ class Finetune_Middle(Dataset):
             chars.remove(self.MASK_CHAR_2)
         chars.insert(0, self.MASK_CHAR_2)
 
+        self.stoi = pretrain_vocab['stoi']
+        self.itos = pretrain_vocab['itos']
+
+        assert len(self.stoi) == len(self.itos)
+
+        breakpoint()
+        self.vocab_size = len(self.stoi)
+        self.data_size = len(data)
+
         print('Data has %d characters, %d unique.' % (self.data_size, self.vocab_size))
 
         self.data = list(data.encode('utf-8').decode('ascii', errors='ignore').split('\n'))[:-1]
-        self.starting = int(0.2 * len(self.data))
-        self.data = self.data[self.starting:]
+
+        self.data = list(filter(lambda x: len(x.split(' ')) - 1 >= game_splits['mid'], self.data))
+        self.min_pt = game_splits['mid']
+        self.max_pt = game_splits['late']
 
     def __len__(self):
         return len(self.data)
@@ -114,7 +129,7 @@ class Finetune_Middle(Dataset):
         spaces = [idx for idx, cur in enumerate(game) if cur == ' ']
         n_spaces = len(spaces)
 
-        index = random.randint((n_spaces // 2) - 1, n_spaces - 2)
+        index = random.randint(self.min_pt, self.max_pt)
         m_start, m_stop = spaces[index] + 1, spaces[index + 1]
         x = game[:m_start] + self.MASK_CHAR_1 + game[m_start:m_stop + 1] + self.MASK_CHAR_1
         x = x + self.PAD_CHAR * (self.block_size - len(x))
@@ -143,13 +158,9 @@ class Finetune_Late(Dataset):
         self.MASK_CHAR_1 = u"\u2047"
         self.MASK_CHAR_2 = u"\u2047"
 
-        self.stoi = pretrain_vocab['stoi']
-        self.itos = pretrain_vocab['itos']
-
-        assert len(self.stoi) == len(self.itos)
-
-        self.vocab_size = len(self.stoi)
-        self.data_size = len(data)
+        chars = list(sorted(list(set(data))))
+        if '\n' in chars:
+            chars.remove('\n')
 
         # Check and insert pad and mask chars
         if self.PAD_CHAR in chars:
@@ -162,11 +173,20 @@ class Finetune_Late(Dataset):
             chars.remove(self.MASK_CHAR_2)
         chars.insert(0, self.MASK_CHAR_2)
 
+        self.stoi = pretrain_vocab['stoi']
+        self.itos = pretrain_vocab['itos']
+
+        assert len(self.stoi) == len(self.itos)
+
+        self.vocab_size = len(self.stoi)
+        self.data_size = len(data)
+
         print('Data has %d characters, %d unique.' % (self.data_size, self.vocab_size))
 
         self.data = list(data.encode('utf-8').decode('ascii', errors='ignore').split('\n'))[:-1]
-        self.starting = 1372360 # resume at correct point
-        self.data = self.data[self.starting:]
+        
+        self.data = list(filter(lambda x: len(x.split(' ')) - 1 >= game_splits['late'], self.data))
+        self.min_pt = game_splits['late']
 
     def __len__(self):
         return len(self.data)
@@ -177,9 +197,8 @@ class Finetune_Late(Dataset):
         spaces = [idx for idx, cur in enumerate(game) if cur == ' ']
         n_spaces = len(spaces)
 
-        min_idx = int(n_spaces * 0.75)
-        index = random.randint(min_idx - 1, n_spaces - 2)
-        index = random.randint(0, n_spaces - 2)
+        max_idx = n_spaces - 1
+        index = random.randint(self.min_pt, max_idx)
         m_start, m_stop = spaces[index] + 1, spaces[index + 1]
         x = game[:m_start] + self.MASK_CHAR_1 + game[m_start:m_stop + 1] + self.MASK_CHAR_1
         x = x + self.PAD_CHAR * (self.block_size - len(x))
@@ -250,8 +269,8 @@ class Commentary_Dataset(Dataset):
         x = x[:-1]
         y = y[1:]
 
-        #x = torch.tensor([self.stoi[c] for c in x], dtype=torch.long)
-        #y = torch.tensor([self.stoi[c] for c in y], dtype=torch.long)
+        x = torch.tensor([self.stoi[c] for c in x], dtype=torch.long)
+        y = torch.tensor([self.stoi[c] for c in y], dtype=torch.long)
 
         return x, y
 
@@ -271,107 +290,6 @@ class Directory:
     def __call__(self):
 
         return self.direct[self.version](self.data, self.config_args['block_size'], self.pretrain_vocab)
-
-
-class ChessMoveDataset(Dataset):
-    def __init__(self, data, block_size=1024, pretrain_vocab=None):
-
-        self.block_size = block_size
-        self.PAD_CHAR = u"\u25A1"
-        self.MASK_CHAR = u"\u2047"
-        chars = list(sorted(list(set(data))))
-        if '\n' in chars:
-            chars.remove('\n')
-
-        # Check and insert pad and mask chars
-        assert self.PAD_CHAR not in chars, 'Pad character redundant!'
-        chars.insert(0, self.PAD_CHAR)
-        assert self.MASK_CHAR not in chars, 'Mask character redundant!'
-        chars.insert(0, self.MASK_CHAR)
-
-        self.stoi = {ch: i for i, ch in enumerate(chars)}
-        self.itos = {i: ch for i, ch in enumerate(chars)}
-
-        data_size, vocab_size = len(data), len(chars)
-        print('Data has %d characters, %d unique.' % (data_size, vocab_size))
-
-        self.data_size = data_size
-        self.vocab_size = vocab_size
-
-        self.data = list(data.encode('utf-8').decode('ascii', errors='ignore'))
-
-    def __len__(self):
-        return len(self.data)
-
-    def __getitem__(self, idx):
-        # randomly select a chess move to remove and have the model predict
-
-        game = self.data[idx]
-
-        moves = [move for move in game.split()]
-
-        index = random.randint(0, len(moves) - 1)
-        masked_move = moves[index]
-
-        if index % 2 == 0:
-            masked_move = masked_move[2:]
-            moves[index] = moves[index][:2]
-        else:
-            moves[index] = ""
-
-        # now, we have masked_move as the actual masked move, and the moves list has been left as if only the move itself were removed
-
-        prefix = " ".join(moves[:index + 1])
-        suffix = " ".join(moves[index + 1:])
-
-        masked_string = prefix + self.MASK_CHAR + " " + suffix + self.MASK_CHAR + masked_move + self.MASK_CHAR
-
-        num_pad_chars = self.block_size - len(masked_string)
-        masked_string += num_pad_chars * self.PAD_CHAR
-
-        input = masked_string[:-1]
-        output = masked_string[1:]
-
-        x = torch.tensor([self.stoi[c] for c in input], dtype=torch.long)
-        y = torch.tensor([self.stoi[c] for c in output], dtype=torch.long)
-        return x, y
-
-
-class FullEmbeddingPretrainDataset(Dataset):
-
-    # requires that we clean numbers out of training data
-    # generate every possible PGN move, store that into
-
-    def __init__(self, data, block_size=1024, pretrain_vocab=None):
-
-        self.block_size = block_size
-        self.PAD_CHAR = u"\u25A1"
-        self.MASK_CHAR = u"\u2047"
-
-        moves = list(set(data))
-
-        # Check and insert pad and mask chars
-        assert self.PAD_CHAR not in moves, 'Pad character redundant!'
-        moves.insert(0, self.PAD_CHAR)
-        assert self.MASK_CHAR not in moves, 'Mask character redundant!'
-        moves.insert(0, self.MASK_CHAR)
-
-        self.stoi = {ch: i for i, ch in enumerate(moves)}
-        self.itos = {i: ch for i, ch in enumerate(moves)}
-
-        data_size, vocab_size = len(data), len(moves)
-        print('Data has %d games, %d unique moves.' % (data_size, vocab_size))
-
-        self.data_size = data_size
-        self.vocab_size = vocab_size
-        self.data = data
-
-    def __len__(self):
-        return len(self.data)
-
-    def __getitem__(self, idx):
-        game = self.data[idx].split()
-        game += self.PAD_CHAR * (self.block_size - len(game))
 
 
 class PretrainDataset(Dataset):
@@ -432,7 +350,7 @@ class PretrainDataset(Dataset):
         return x, y
 
 
-finetune_versions = {0: Finetune_Full,
+finetune_versions = {0: Finetune_Early,
                      1: Finetune_Middle,
                      2: Finetune_Late,
                      3: Commentary_Dataset}
