@@ -9,3 +9,7 @@ ckpts/finetune_mid/
 ckpts/finetune_late/
 bot_scores.pkl
 comp_scores.pkl
+ckpts/
+commentary_results/
+data/
+.ipynb_checkpoints/
