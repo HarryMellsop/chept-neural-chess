@@ -46,20 +46,20 @@ Training can be achieved through
     $ python run.py
     
 There are many different flags to utilize depending on whether you are pretraining or finetuning.
-        * function: Pretrain or finetune model (pretrain, finetune])
-        * --version: Finetune version
-        * --data_path: Dataset to use
-        * --save_dir: Directory to save checkpoints
-        * --pretrain_params: Path to model params (use for finetune)
-        * --args_path: Path to JSON training args
-        * --block_size: Super config arg
-        * --n_layer: Super config arg
-        * --n_head: Super config arg
-        * --n_embed: Super config arg
-        * --max_epoch: Super train arg
-        * --batch_size: Super train arg
-        * --learning_rate: Super train arg
-        * --num_workers: Super train arg
+    * function: Pretrain or finetune model (pretrain, finetune])
+    * --version: Finetune version
+    * --data_path: Dataset to use
+    * --save_dir: Directory to save checkpoints
+    * --pretrain_params: Path to model params (use for finetune)
+    * --args_path: Path to JSON training args
+    * --block_size: Super config arg
+    * --n_layer: Super config arg
+    * --n_head: Super config arg
+    * --n_embed: Super config arg
+    * --max_epoch: Super train arg
+    * --batch_size: Super train arg
+    * --learning_rate: Super train arg
+    * --num_workers: Super train arg
 
 Any argument denoted with the word ``super`` will overwite arguments loaded in the pretrain_params file and the args_path file.
     
