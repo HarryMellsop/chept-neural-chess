@@ -110,7 +110,7 @@ def eval_scores(references, hypotheses):
     BLEUscores = []
     lengths = []
     sentences = []
-    for i in range(len(references)):
+    for i in range(len(hypothesis)):
         reference, hypothesis = references[i], hypotheses[i]
         lengths.append({'Reference Length': len(reference),
                         'Prediction Length': len(hypothesis)})
@@ -155,17 +155,19 @@ def main(comm_model, chept_model, test_file, comm_vocabs, chept_vocabs, args):
         test_scenarios = test_scenarios[400:450]
         for test in tqdm(test_scenarios):
             split = test.split(MASK_CHAR)
-            references.append(split[1])
+            if not args.no_ref:
+                references.append(split[1])
             commentary = get_prediction(split[0], comm_model, comm_vocabs, args.masks, size=args.comm_size, sample=args.sampling)
             pgns.append(split[0])
             print(commentary)
             hypotheses.append(commentary)
 
         # eval results (such as bleu score)
-        results = eval_scores(references, hypotheses)
-        results.update({'PGNs': pgns})
+        if not args.no_ref:
+            results = eval_scores(references, hypotheses)
+            results.update({'PGNs': pgns})
 
-        save_results(results, args, '_eval_text')
+            save_results(results, args, '_eval_text')
 
 
 def get_recent_ckpt(ckpt_dir):
@@ -211,6 +213,8 @@ if __name__ == '__main__':
                         help='Toggle masks OFF')
     parser.add_argument('--sampling', action='store_true',
                         help='Toggle sampling ON')
+    parser.add_argument('--no_refs', action='store_false',
+                        help='Toggle references off')
 
     args = parser.parse_args()
 
